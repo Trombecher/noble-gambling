@@ -1,0 +1,70 @@
+{
+    "compilerOptions": {
+        // Type Checking
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "alwaysStrict": true,
+        "exactOptionalPropertyTypes": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "noUncheckedIndexedAccess": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "strict": true,
+        "strictBindCallApply": true,
+        "strictFunctionTypes": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "useUnknownInCatchVariables": true,
+        // Modules
+        "allowArbitraryExtensions": true,
+        "allowImportingTsExtensions": false,
+        "allowUmdGlobalAccess": false,
+        // "customConditions": [],
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        // "moduleSuffixes": [],
+        // "noResolve": false
+        // "paths": {}
+        "resolveJsonModule": true,
+        "resolvePackageJsonExports": true,
+        "resolvePackageJsonImports": true,
+        // "rootDir": "./src",
+        // "rootDirs": []
+        // "typeRoots": []
+        // "types": []
+
+        // Emit
+        "noEmit": true,
+        // ...
+
+        // JavaScript Support
+        "allowJs": false,
+        // Language and Environment
+        "lib": [
+            "ESNext",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "target": "ESNext",
+        // ...
+
+        // Output Formatting
+        "noErrorTruncation": true,
+        "preserveWatchOutput": true,
+        "pretty": true,
+
+        // JSX
+        "jsx": "preserve",
+        "jsxFactory": "createElement",
+        "jsxFragmentFactory": "Fragment",
+        "jsxImportSource": "aena"
+    },
+    "include": [
+        "src"
+    ]
+}
