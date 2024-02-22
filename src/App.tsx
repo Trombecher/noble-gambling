@@ -16,15 +16,18 @@ export default function App() {
                 <h1 class={"mr-auto font-fancy text-shade-50"}>Noble Gambling</h1>
                 <div>${insertBoxAsText(balance)}</div>
             </header>
-            <main>
-                <section></section>
+            <main class={""}>
+                <div class={"p-4 bg-shade-50"}>yososo</div>
+                <section>
+                    <Games/>
+                </section>
             </main>
         </>
     );
 }
 
 function Games() {
-    return []
+    return [].map(Game);
 }
 
 function Game() {
