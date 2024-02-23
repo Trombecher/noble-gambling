@@ -3,3 +3,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.b{
+    border: none;
+    background-color: white;
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    font-size: 100px;
+    color: white;
+    border-radius: 30px;
+    
+    opacity: 0.8;
+    align-content:bottom ;
+    
+}
+.b:hover{
+    opacity: 1;
+}
+.p{
+    border: none;
+    background-color: white;
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    font-size: 100px;
+    color: white;
+    border-radius: 30px;
+    
+    opacity: 0.8;
+}
+.p:hover{
+    opacity: 1;
+}
+.r{
+    border: none;
+    background-color: white;
+    padding-left: 0cm;
+    padding-right: 0cm;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    font-size: 100px;
+    color: white;
+    border-radius: 30px;
+    opacity: 0.8;
+  
+}
+
+.r:hover{
+    opacity: 1;
+}
+img {
+        border-radius: 30px;
+        
+}
+
+body {
+    height: 100vh;
+}
