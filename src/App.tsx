@@ -13,7 +13,7 @@ export default function App() {
     return (
         <>
             <header class={"flex p-4 w-full"}>
-                <h1 class={"mr-auto font-fancy text-shade-50"}>Noble Gambling</h1>
+                <h1 class={"mr-auto text-shade-50"}>Noble Gambling</h1>
                 <div>${insertBoxAsText(balance)}</div>
             </header>
             <main class={"flex flex-wrap justify-center gap-6 "}>

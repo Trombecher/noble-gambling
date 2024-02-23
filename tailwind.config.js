@@ -4,9 +4,8 @@ import defaultTheme from "tailwindcss/defaultTheme";
 export default {
     theme: {
         fontFamily: {
-            "sans": [...defaultTheme.fontFamily.sans],
+            "sans": ["Playfair Display", ...defaultTheme.fontFamily.sans],
             "mono": [...defaultTheme.fontFamily.mono],
-            "fancy": ["Rye", "sans-serif"]
         },
         colors: {
             shade: {
