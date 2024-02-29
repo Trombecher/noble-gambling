@@ -31,7 +31,7 @@ export default function App() {
                 <button class="Slots">
                     <img width="400" height="225" src="/Slots.jpg" alt="" />
                 </button>
-                <button class="Roulette">
+                <button class="Roulette" onclick={() => game.value = Roulette}>
                     <img width="400" height="225" src="/Roulette.jpg" alt="" />
                 </button>
                 <button class="Poker">
