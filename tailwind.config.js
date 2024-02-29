@@ -21,7 +21,7 @@ export default {
                 900: '#1D191F',
                 950: '#100E11'
             },
-            rot: "#6A2E35"
+            rot: "#034732"
         }
     },
     content: [
