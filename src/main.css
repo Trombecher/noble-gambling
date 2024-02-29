@@ -10,7 +10,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-.b{
+.Poker{
     border: none;
     background-color: white;
     padding-left: 0px;
@@ -25,10 +25,10 @@
     align-content:bottom ;
     
 }
-.b:hover{
+.Poker:hover{
     opacity: 1;
 }
-.p{
+.Slots{
     border: none;
     background-color: white;
     padding-left: 0px;
@@ -41,10 +41,10 @@
     
     opacity: 0.8;
 }
-.p:hover{
+.Slots:hover{
     opacity: 1;
 }
-.r{
+.Roulette{
     border: none;
     background-color: white;
     padding-left: 0cm;
@@ -58,7 +58,7 @@
   
 }
 
-.r:hover{
+.Roulette:hover{
     opacity: 1;
 }
 img {
