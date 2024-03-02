@@ -24,7 +24,7 @@ export function GameSelect({currentGame}: {currentGame: Box<Pair | undefined>}) 
             {GAME_MAP.map((pair) => (
                 <button
                     onclick={() => currentGame.value = pair}
-                    class={"block relative rounded-3xl overflow-hidden transition hover:brightness-75"}
+                    class={currentGame.derive(currentPair => `${currentPair === pair ? "hidden" : ""} block relative rounded-3xl overflow-hidden transition hover:brightness-75`)}
                 >
                     <img
                         width={450}
@@ -51,7 +51,7 @@ export function CurrentGame({
     balance: Box<number>
 }) {
     return insertBox(currentGame, game => game ? (
-        <div class={"mx-auto flex flex-col max-w-screen-sm w-full mb-32"}>
+        <div class={"mx-auto flex flex-col max-w-screen-sm w-full mb-32 px-6"}>
             <h1 class={"text-2xl text-shade-50"}>{game[0]}</h1>
             {game[1]({balance, name: game[0]})}
         </div>

@@ -21,7 +21,10 @@ export default {
                 900: '#1D191F',
                 950: '#100E11'
             },
-            rot: "#034732"
+            green: "#034732",
+            red: "#d62626",
+            brown: "#2e1209",
+            lime: "#66af1d"
         }
     },
     content: [
