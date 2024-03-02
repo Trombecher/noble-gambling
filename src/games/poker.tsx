@@ -1,4 +1,4 @@
-import {Game} from "../App";
+import {Game} from "../games";
 
 export const Poker: Game = () => {
     return (

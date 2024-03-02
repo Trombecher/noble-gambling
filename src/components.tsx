@@ -21,6 +21,7 @@ export function MoneyBetter({
                 oninput={e => amount.value = +e.target.value}
                 step={1}
                 disabled={locked}
+                value={0}
             />
         </div>
     )
