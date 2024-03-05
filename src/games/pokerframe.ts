@@ -81,31 +81,31 @@ class Hand{
 
     private fillFlushSuit(suit: Suit){
         for (let card of this.input)
-            if (card.suit == suit) this.flush_suit_vals[card.value - vao]++
+            if (card.suit == suit) this.flush_suit_vals[card.value - vao]!++
     }
     private countProperties(){
         for (let card of this.input){
-            this.val_count[card.value - vao]++
-            this.suit_count[card.suit]++
+            this.val_count[card.value - vao]!++
+            this.suit_count[card.suit]!++
         }
     }
     // returns highest card in hand
     // excludes such of any value given in 'exclude'
     private highestCard(exclude: Value[]): Value{
         for (let v = Value.Ace; v >= Value.Two; v--)
-            if (this.val_count[v - vao] && !exclude.includes(v)) return v
+            if (this.val_count[v - vao]! && !exclude.includes(v)) return v
         return Value.Zero
     }
 
     private hasKind(n: number): Value{
         for (let v = Value.Ace; v >= Value.Two; v--)
-            if (this.val_count[v - vao] == n) return v
+            if (this.val_count[v - vao]! == n) return v
         return Value.Zero
     }
     private hasTwoPair(): Value[]{
         let list: Value[] = []
         for (let v = Value.Ace; v >= Value.Two; v--)
-            if (this.val_count[v - vao] == 2) list.push(v)
+            if (this.val_count[v - vao]! == 2) list.push(v)
         
         if (list.length < 2) list = [Value.Zero]
         return list
@@ -117,7 +117,7 @@ class Hand{
         // allows wraps from ace to two
         let callback = (i: number): boolean => {
             for (;i < i + 5; i++)
-                if (!count[i % 13]) return false
+                if (!count[i % 13]!) return false
             return true
         }
         // straights are generally ranked by their highest value cards
@@ -131,7 +131,7 @@ class Hand{
     }
     private isFlush(): boolean{
         for (let s = Suit.Clubs; s < NUM_SUITS; s++)
-            if (this.suit_count[s] >= 5){
+            if (this.suit_count[s]! >= 5){
                 this.fillFlushSuit(s)
                 return true
             }
@@ -139,7 +139,7 @@ class Hand{
     }
     private isRoyal(): boolean{
         for (let v = Value.Ten; v <= Value.Ace; v++)
-            if (!this.flush_suit_vals[v - vao]) return false
+            if (!this.flush_suit_vals[v - vao]!) return false
         return true
     }
 
@@ -148,8 +148,8 @@ class Hand{
         if (this.rank < other.rank) return Comp.Smaller
 
         for (let i = 0; i < this.tiebreakers.length; i++){
-            if (this.tiebreakers[i] > other.tiebreakers[i]) return Comp.Greater
-            if (this.tiebreakers[i] < other.tiebreakers[i]) return Comp.Smaller
+            if (this.tiebreakers[i]! > other.tiebreakers[i]!) return Comp.Greater
+            if (this.tiebreakers[i]! < other.tiebreakers[i]!) return Comp.Smaller
         }
         return Comp.Equal
     }
@@ -250,7 +250,7 @@ function shuffledDeck(): Deck{
     let temp_deck = Object.assign([], full_deck)
     for (let i = 51; i >= 0; i--){
         let ix = Math.floor(Math.random() * (i + 1))
-        deck.push(temp_deck[ix])
+        deck.push(temp_deck[ix]!)
         temp_deck.splice(ix, 1)
     }
     return deck
