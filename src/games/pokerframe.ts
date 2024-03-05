@@ -301,6 +301,7 @@ class Game{
         this.current_player().bet += amount
         this.current_player().cash -= amount
         this.pot += amount
+        // update pot and show players their new net worth and bet \\
     }
 
     private check(){
@@ -336,12 +337,14 @@ class Game{
     private updateHands(){
         for (let players of this.player)
             players.updateHand(this.mid)
+            
+        // show each player what their current best hand looks like? \\
     }
     // returns true if all players except one have folded
     private betRound(): boolean{
         this.updateHands()
         do{
-            this.act(wait_for_action())
+            this.act(wait_for_action()) // let the player choose their action \\
         }while(this.nextPlayer())
 
         let not_folded = this.player.filter((player) => !player.has_folded)
@@ -353,6 +356,8 @@ class Game{
             players.card.push(this.deck.pop() as Card)
             players.card.push(this.deck.pop() as Card)
         }
+
+        // show players their cards \\
     }
     private revealMid(stage: RevealType){
         if (stage == RevealType.Flop){
@@ -360,12 +365,21 @@ class Game{
                 this.mid.push(this.deck.pop() as Card)
         }
         else this.mid.push(this.deck.pop() as Card)
+
+        // show community cards to players \\
     }
 
     private wrapUp(){
-        this.updateHands()
-        let not_folded = this.player.filter((player) => !player.has_folded)
+        // if all players except one have folded before all community cards have been shown
+        // this shows the remaining cards and updates player hands
+        if (this.mid.length < 5){
+            for (let i = 0; i < 5 - this.mid.length; i++)
+                this.mid.push(this.deck.pop() as Card)
 
+            this.updateHands()
+        }
+
+        let not_folded = this.player.filter((player) => !player.has_folded)
         let winners = [not_folded[0]]
         not_folded.splice(0, 1)
         for (let player of not_folded){
@@ -374,16 +388,20 @@ class Game{
             else if (res == Comp.Equal)     winners.push(player)
         }
 
-        for (let winner of winners)
+        for (let winner of winners) // splits pot equally among winners (no side pots etc.)
             winner.cash += this.pot / winners.length
+
+        // show players their new net worth \\
     }
 
+    // Runs one full game, decides on the winners and pays out
     start(){
-        this.distribute()
-        if (!this.betRound())
+        this.distribute()       // distributes cards to the players (pre-flop)
+        if (!this.betRound())   // runs the first round of betting
 
-            for (let stage = RevealType.Flop; stage <= RevealType.Turn; stage++){
-                this.revealMid(stage)
+            // runs three betting rounds
+            for (let stage = RevealType.Flop; stage <= RevealType.River; stage++){
+                this.revealMid(stage)   // in stages - reveals the community cards (flop, turn, river)
                 if (this.betRound()) break
             }
 
