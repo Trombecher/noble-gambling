@@ -74,19 +74,19 @@ class Hand{
     rank = HandType.None
 
 
-    private input: Card[] = []
+    private readonly input: Card[] = []
     private suit_count: number[] = [0, 0, 0, 0]
-    private val_count: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    private readonly val_count: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     private flush_suit_vals: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     private fillFlushSuit(suit: Suit){
         for (let card of this.input)
-            if (card.suit == suit) this.flush_suit_vals[card.value - vao]!++
+            if (card.suit == suit) this.flush_suit_vals[card.value - vao]++
     }
     private countProperties(){
         for (let card of this.input){
-            this.val_count[card.value - vao]!++
-            this.suit_count[card.suit]!++
+            this.val_count[card.value - vao]++
+            this.suit_count[card.suit]++
         }
     }
     // returns highest card in hand
@@ -364,8 +364,8 @@ class Game{
         }while(this.nextPlayer())
 
         let not_in = this.player.filter((player) => !player.has_folded && !player.is_all_in)
-        if (not_in.length <= 1) return true
-        return false
+        return not_in.length <= 1;
+
     }
     private distribute(){
         for (let p of this.player){
