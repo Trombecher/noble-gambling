@@ -2,6 +2,8 @@ import {Box} from "aena";
 import {Button, MoneyBetter} from "../components";
 import {Game} from "../games";
 
+type Bet = "Even" | "Odd" | number | "Red" | "Black";
+
 type Color = "Red" | "Black";
 
 const NUMBERS = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
@@ -15,14 +17,16 @@ export const Roulette: Game = ({balance}) => {
 
     return (
         <>
-            {wheel}
+            <div class={"w-full"}>
+                {wheel}
+                <div class={""}></div>
+            </div>
             <div class={"flex gap-4 my-4"}>
-                {([["Red", "#cc4a4a"], ["Black", "#000000"]] satisfies [Color, string][]).map(([color, hex]) => (
+                {(["Red", "Black"] as const).map(color => (
                     <button
                         class={selectedColor.derive(selectedColor => `${
                             selectedColor === color ? "outline-offset-4 outline outline-shade-50 " : ""
                         }rounded-full w-full block`)}
-                        ref={button => button.style.backgroundColor = hex}
                         onclick={() => selectedColor.value = color}
                     >{color}</button>
                 ))}
