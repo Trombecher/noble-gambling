@@ -1,6 +1,6 @@
 // types
 
-enum Value{
+enum Rank{
     Zero,
     Two = 2,
     Three,
@@ -16,7 +16,7 @@ enum Value{
     King,
     Ace
 }
-let NUM_VALUES = 13
+let NUM_RANKS = 13
 
 // value array offset
 let vao = 2
@@ -57,10 +57,10 @@ enum Comp{
 }
 
 class Card{
-    value: Value;
+    value: Rank;
     suit: Suit;
 
-    constructor(v: Value, s:Suit){
+    constructor(v: Rank, s:Suit){
         this.value = v
         this.suit = s
     }
@@ -70,7 +70,7 @@ class Card{
 // constructor() takes any amount of cards as input and finds the best hand among them
 // along with the hand rank it also finds the relevant values for tiebreakers
 class Hand{
-    tiebreakers: Value[] = [];
+    tiebreakers: Rank[] = [];
     rank = HandType.None
 
 
@@ -91,43 +91,44 @@ class Hand{
     }
     // returns highest card in hand
     // excludes such of any value given in 'exclude'
-    private highestCard(exclude: Value[]): Value{
-        for (let v = Value.Ace; v >= Value.Two; v--)
+    private highestCard(exclude: Rank[]): Rank{
+        for (let v = Rank.Ace; v >= Rank.Two; v--)
             if (this.val_count[v - vao]! && !exclude.includes(v)) return v
-        return Value.Zero
+        return Rank.Zero
     }
 
-    private hasKind(n: number): Value{
-        for (let v = Value.Ace; v >= Value.Two; v--)
+    private hasKind(n: number): Rank{
+        for (let v = Rank.Ace; v >= Rank.Two; v--)
             if (this.val_count[v - vao]! == n) return v
-        return Value.Zero
+        return Rank.Zero
     }
-    private hasTwoPair(): Value[]{
-        let list: Value[] = []
-        for (let v = Value.Ace; v >= Value.Two; v--)
+    private hasTwoPair(): Rank[]{
+        let list: Rank[] = []
+        for (let v = Rank.Ace; v >= Rank.Two; v--)
             if (this.val_count[v - vao]! == 2) list.push(v)
         
-        if (list.length < 2) list = [Value.Zero]
+        if (list.length < 2) list = [Rank.Zero]
         return list
     }
-    private isStraight(t: HandType = HandType.Straight): Value{
+    private isStraight(t: HandType = HandType.Straight): Rank{
         let count = (t == HandType.Flush) ? this.flush_suit_vals : this.val_count
 
         // finds if a straight with starting index 'i' exists
         // allows wraps from ace to two
         let callback = (i: number): boolean => {
-            for (;i < i + 5; i++)
+            let j = i + 5
+            for (;i < j; i++)
                 if (!count[i % 13]!) return false
             return true
         }
         // straights are generally ranked by their highest value cards
-        if (callback(Value.Ten - vao)) return Value.Ace + 1   // best straight is royal
-        for (let v = Value.Jack; v <= Value.Ace; v++)       // then all others containing an ace 
+        if (callback(Rank.Ten - vao)) return Rank.Ace + 1 // best straight is royal
+        for (let v = Rank.Jack; v <= Rank.Ace; v++)       // then all others containing an ace 
             if (callback(v - vao)) return v
-        for (let v = Value.Nine; v >= Value.Two; v--)       // the rest
+        for (let v = Rank.Nine; v >= Rank.Two; v--)       // the rest
             if (callback(v - vao)) return v
         
-        return Value.Zero
+        return Rank.Zero
     }
     private isFlush(): boolean{
         for (let s = Suit.Clubs; s < NUM_SUITS; s++)
@@ -138,7 +139,7 @@ class Hand{
         return false
     }
     private isRoyal(): boolean{
-        for (let v = Value.Ten; v <= Value.Ace; v++)
+        for (let v = Rank.Ten; v <= Rank.Ace; v++)
             if (!this.flush_suit_vals[v - vao]!) return false
         return true
     }
@@ -168,7 +169,7 @@ class Hand{
         let p2 = this.hasTwoPair()
 
         // pushes all values in 'exclude' and those of the 'n' next highest ranking cards into the tiebreakers
-        let pushTiebreakers = (n: number, exclude: Value[]) => {
+        let pushTiebreakers = (n: number, exclude: Rank[]) => {
             if (exclude.length) this.tiebreakers.push(...exclude)
 
             for (let i = 0; i < n; i++){
@@ -210,6 +211,10 @@ class Hand{
             this.rank = HandType.Two_Pair
             pushTiebreakers(1, p2)
         }
+        else if (k2){
+            this.rank = HandType.One_Pair
+            pushTiebreakers(3, [k2])
+        }
         else{
             this.rank = HandType.High
             pushTiebreakers(5, [])
@@ -223,6 +228,7 @@ class Player{
     bet: Money = 0
     hand: Hand = new Hand([])
     has_folded = false
+    is_all_in = false
 
     updateHand(mid: Card[]){
         let input = [...this.card, ...mid]
@@ -259,13 +265,14 @@ function shuffledDeck(): Deck{
 enum ActionType{
     Check,
     Raise,
-    Fold
+    Fold,
+    All_In
 }
 class Action{
     kind: ActionType
     amount: Money
 
-    constructor(k: ActionType, a: Money){
+    constructor(k: ActionType, a: Money = 0){
         this.kind = k
         this.amount = a
     }
@@ -276,6 +283,8 @@ class Game{
     mid: Card[] = []
     pot: Money = 0
     to_match: Money = 0
+    blind: Money = 25
+    dealer_id = 0
     private current_player_id = 0
     private last_to_raise = 0
     private deck = shuffledDeck()
@@ -286,15 +295,17 @@ class Game{
     private reset(){
         this.pot = 0
         this.to_match = 0
-        this.current_player_id = 0
         this.last_to_raise = 0
         this.mid = []
         this.deck = shuffledDeck()
-        for (let players of this.player){
-            players.card = []
-            players.bet = 0
-            players.has_folded = false
-            players.hand.rank = HandType.None
+        this.dealer_id = (this.dealer_id + 1) % this.player.length
+        this.current_player_id = this.dealer_id
+        for (let p of this.player){
+            p.card = []
+            p.bet = 0
+            p.has_folded = false
+            p.is_all_in = false
+            p.hand = new Hand([])
         }
     }
     private setBet(amount: Money){
@@ -308,7 +319,7 @@ class Game{
         let increase = this.to_match - this.current_player().bet
         this.setBet(increase)
     }
-    private raise(amount: Money){
+    private raise(amount: Money){ // minimum allowed raise should be the amount of a big blind (2 * blind)
         this.setBet(amount)
         this.to_match = this.current_player().bet
         this.last_to_raise = this.current_player_id
@@ -316,10 +327,15 @@ class Game{
     private fold(){
         this.current_player().has_folded = true
     }
+    private allIn(){
+        this.current_player().is_all_in = true
+        this.raise(this.current_player().cash)
+    }
     private act(action: Action){
         if      (action.kind == ActionType.Check)   this.check()
         else if (action.kind == ActionType.Raise)   this.raise(action.amount)
         else if (action.kind == ActionType.Fold)    this.fold()
+        else if (action.kind == ActionType.All_In)  this.allIn()
     }
 
     // gets next player
@@ -328,9 +344,9 @@ class Game{
     private nextPlayer(): boolean{
         do{
             this.current_player_id = (this.current_player_id + 1) % this.player.length
-        }while(!this.current_player().has_folded)
+            if (this.current_player_id == this.last_to_raise) return false
+        }while(this.current_player().has_folded || this.current_player().is_all_in)
 
-        if (this.current_player_id == this.last_to_raise) return false
         return true
     }
 
@@ -340,21 +356,21 @@ class Game{
             
         // show each player what their current best hand looks like? \\
     }
-    // returns true if all players except one have folded
+    // returns true if all players except one have folded or are all in
     private betRound(): boolean{
         this.updateHands()
         do{
             this.act(wait_for_action()) // let the player choose their action \\
         }while(this.nextPlayer())
 
-        let not_folded = this.player.filter((player) => !player.has_folded)
-        if (not_folded.length == 1) return true
+        let not_in = this.player.filter((player) => !player.has_folded && !player.is_all_in)
+        if (not_in.length <= 1) return true
         return false
     }
     private distribute(){
-        for (let players of this.player){
-            players.card.push(this.deck.pop() as Card)
-            players.card.push(this.deck.pop() as Card)
+        for (let p of this.player){
+            p.card.push(this.deck.pop() as Card)
+            p.card.push(this.deck.pop() as Card)
         }
 
         // show players their cards \\
@@ -393,10 +409,18 @@ class Game{
 
         // show players their new net worth \\
     }
+    private setBlinds(){
+        this.current_player_id -= 2
+        this.raise(this.blind)
+        this.nextPlayer()
+        this.raise(2 * this.blind)
+        this.nextPlayer()
+    }
 
     // Runs one full game, decides on the winners and pays out
     start(){
         this.distribute()       // distributes cards to the players (pre-flop)
+        this.setBlinds()        
         if (!this.betRound())   // runs the first round of betting
 
             // runs three betting rounds
@@ -408,6 +432,15 @@ class Game{
         this.wrapUp()
         this.reset()
     }
+
+    addPlayers(n: number){
+        for (let i = 0; i < n; i++)
+            this.player.push(new Player)
+    }
+    giveAll(amount: Money){
+        for (let p of this.player)
+            p.cash += amount
+    }
 }
 
 
@@ -415,3 +448,8 @@ class Game{
 function wait_for_action(): Action{
     return new Action(ActionType.Raise, 200)
 }
+
+let game = new Game
+game.addPlayers(2)
+game.giveAll(1000)
+console.log("------")
