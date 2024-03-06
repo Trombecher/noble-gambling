@@ -1,6 +1,6 @@
 import {Box, JSX, ReadonlyBox} from "aena";
 import {Roulette} from "./games/roulette";
-import {Poker} from "./games/pokerframe";
+import {Poker} from "./games/poker";
 import {insertBox} from "aena/glue";
 
 export const GAME_MAP: readonly (readonly [string, Game])[] = [

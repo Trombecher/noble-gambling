@@ -290,7 +290,7 @@ class Game{
     private deck = shuffledDeck()
 
     private current_player(){
-        return this.player[this.current_player_id]
+        return this.player[this.current_player_id]!
     }
     private reset(){
         this.pot = 0
@@ -399,13 +399,13 @@ class Game{
         let winners = [not_folded[0]]
         not_folded.splice(0, 1)
         for (let player of not_folded){
-            let res = player.hand.compare(winners[0].hand)
+            let res = player.hand.compare(winners[0]!.hand)
             if      (res == Comp.Greater)   winners = [player]
             else if (res == Comp.Equal)     winners.push(player)
         }
 
         for (let winner of winners) // splits pot equally among winners (no side pots etc.)
-            winner.cash += this.pot / winners.length
+            winner!.cash += this.pot / winners.length
 
         // show players their new net worth \\
     }
