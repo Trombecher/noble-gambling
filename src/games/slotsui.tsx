@@ -1,9 +1,23 @@
+import { Box } from "aena";
 import { slots } from "./slots";
+import { insertBox } from "aena/glue";
 
 export default function Slots() {
-    const {slot1, slot2, slot3, slotspin} = slots();
+    const {slotspin, ...boxes} = slots();
 
     return (
-        <div></div>
+        <>
+            <div>{Object.values(boxes).map(slot => (
+                <Slot slot={slot}/>
+            ))}</div>
+        </>
+    )
+}
+
+function Slot({slot}: {slot: Box<number>}) {
+    return (
+        <div>{insertBox(slot, state => (
+            <div>{state}</div>
+        ))}</div>
     )
 }
