@@ -26,14 +26,9 @@ export default function App() {
                 >Noble Gambling</button>
                 <div>${insertBoxAsText(balance)}</div>
             </header>
-            <CurrentGame
-                currentGame={currentPair}
-                balance={balance}
-            />
-            <h1 class={"mx-auto mb-6 font-semibold text-2xl text-shade-50"}>{insertBoxToString(currentPair, pair => pair ? "More Games" : "")}</h1>
-            <GameSelect
-                currentGame={currentPair}
-            />
+            <CurrentGame currentGame={currentPair} balance={balance}/>
+            <h1 class={"mx-auto mb-6 font-semibold text-2xl text-shade-50 mt-12"}>{insertBoxToString(currentPair, pair => pair ? "More Games" : "")}</h1>
+            <GameSelect currentGame={currentPair}/>
             <footer class={"py-6 mx-auto mt-auto"}>Copyright &copy; {new Date().getFullYear()} Robin, Niklas und Tobias</footer>
         </>
     );

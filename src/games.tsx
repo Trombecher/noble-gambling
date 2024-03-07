@@ -1,4 +1,4 @@
-import {Box, JSX, ReadonlyBox} from "aena";
+import {Box, JSX} from "aena";
 import {Roulette} from "./games/roulette";
 import {Poker} from "./games/pokerui";
 import {insertBox} from "aena/glue";
@@ -48,13 +48,13 @@ export function CurrentGame({
     currentGame,
     balance
 }: {
-    currentGame: ReadonlyBox<Pair | undefined>,
+    currentGame: Readonly<Box<Pair | undefined>>,
     balance: Box<number>
 }) {
-    return insertBox(currentGame, game => game ? (
-        <div class={"mx-auto flex flex-col max-w-screen-sm w-full mb-32 px-6"}>
+    return insertBox(currentGame, game => game && (
+        <>
             <h1 class={"text-2xl text-shade-50"}>{game[0]}</h1>
             {game[1]({balance, name: game[0]})}
-        </div>
-    ) : "");
+        </>
+    ));
 }

@@ -1,86 +1,137 @@
 import {Box} from "aena";
 import {Button, MoneyBetter} from "../components";
 import {Game} from "../games";
+import {insertBox} from "aena/glue";
 
 type Bet = "Even" | "Odd" | number | "Red" | "Black";
-
-type Color = "Red" | "Black";
 
 const NUMBERS = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
 export const Roulette: Game = ({balance}) => {
-    const bet = new Box(0);
-    const selectedColor = new Box<Color>("Red");
+    const moneyBet = new Box(0);
+    const bet = new Box<Bet>("Red");
     const locked = new Box(false);
-
-    const [wheel, spin] = Wheel();
+    const won = new Box<boolean | undefined>(undefined);
+    const [wheel, spin] = Wheel(bet, locked);
 
     return (
         <>
-            <div class={"w-full"}>
+            <div class={"select-none mx-auto w-full max-w-screen-md flex"}>
                 {wheel}
-                <div class={""}></div>
             </div>
-            <div class={"flex gap-4 my-4"}>
-                {(["Red", "Black"] as const).map(color => (
-                    <button
-                        class={selectedColor.derive(selectedColor => `${
-                            selectedColor === color ? "outline-offset-4 outline outline-shade-50 " : ""
-                        }rounded-full w-full block`)}
-                        onclick={() => selectedColor.value = color}
-                    >{color}</button>
+            {insertBox(won, won => won && (
+                <h2 class={"text-8xl"}>{won ? "Won" : "Lost"}</h2>
+            ))}
+            <h2 class={"text-shade-50 text-2xl mb-6 self-center mt-8"}>Bet on a number or below:</h2>
+            <div class={"w-40 h-40 grid grid-cols-2 gap-2 mb-4 z-50 self-center"}>
+                {([
+                    "Red",
+                    "Black",
+                    "Even",
+                    "Odd"
+                ] satisfies Bet[]).map(xBet => (
+                    <SelectBet
+                        currentBet={bet}
+                        bet={xBet}
+                        locked={locked}
+                    />
                 ))}
             </div>
-            <MoneyBetter
-                max={balance}
-                amount={bet}
-                locked={locked}
-            />
-            <Button
-                disabled={locked}
-                onclick={async () => {
-                    let result = Math.round(Math.random() * 36);
-                    locked.value = true;
-                    await spin(result);
-                    locked.value = false;
-                }}
-            >Gamble
-            </Button>
+            <div class={"mx-auto flex gap-2 items-center"}>
+                <MoneyBetter
+                    max={balance}
+                    amount={moneyBet}
+                    locked={locked}
+                />
+                <Button
+                    disabled={locked}
+                    onclick={async () => {
+                        const result = Math.floor(Math.random() * NUMBERS.length);
+                        locked.value = true;
+                        await spin(result);
+
+                        if((bet.value === "Even" && result % 2 === 0)
+                            || (bet.value === "Odd" && result % 2 === 1)
+                            || (bet.value === "Red" && isRed(NUMBERS.indexOf(result)))
+                            || (bet.value === "Black" && !isRed(NUMBERS.indexOf(result)))) {
+                            balance.value += moneyBet.value;
+                            won.value = true;
+                        } else if(bet.value === result) {
+                            balance.value += moneyBet.value * 36;
+                            won.value = true;
+                        } else {
+                            balance.value -= moneyBet.value;
+                            won.value = false;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        locked.value = false;
+                        won.value = undefined;
+                    }}
+                >Gamble
+                </Button>
+            </div>
         </>
     );
 };
 
-function Wheel() {
+function SelectBet({
+    currentBet,
+    bet,
+    locked
+}: {
+    currentBet: Box<Bet>,
+    bet: Bet,
+    locked: Box<boolean>,
+}) {
+    return (
+        <button
+            class={currentBet.derive(currentBet => `${
+                currentBet === bet ? "bg-red border-shade-50" : "hover:bg-shade-50/50 bg-shade-50/30 border-shade-50/30"
+            } rounded-full flex justify-center items-center text-shade-50 border-2`)}
+            onclick={() => currentBet.value = bet}
+            disabled={locked}
+        >{bet}</button>
+    );
+}
+
+const SPIN_DURATION = 5;
+
+function Wheel(
+    currentBet: Box<Bet>,
+    locked: Box<boolean>,
+) {
     let g: SVGElement;
     const wheel = (
         <svg
             viewBox={"0 0 64 64"}
-            class={"w-full"}
+            class={""}
         >
             <g
                 class={"transition [transform-origin:center] ease-out"}
                 ref={x => {
                     g = x;
-                    g.style.transitionDuration = "10s";
+                    g.style.transitionDuration = `${SPIN_DURATION}s`;
                 }}
             >
                 <mask id={"m"}>
                     <circle cx={32} cy={32} r={32} fill={"#ffffff"}/>
                     <circle cx={32} cy={32} r={24} fill={"#000"}/>
                 </mask>
-                <circle
-                    cx={32}
-                    cy={32}
-                    r={24}
-                    class={"fill-brown"}
-                />
+                <circle cx={32} cy={32} r={32} class={"fill-brown"}/>
                 <g mask={"url(#m)"}>
                     {NUMBERS.map((value, index) => (
-                        <>
+                        <g
+                            onclick={() => !locked.value && (currentBet.value = value)}
+                            class={"cursor-pointer"}
+                        >
                             <path
                                 d={"M32 32L34.789 63.8782A32 32 0 0 1 29.211 63.8782"}
                                 transform={`rotate(${index / NUMBERS.length * 360} 32 32)`}
-                                class={value === 0 ? "fill-lime" : isRed(index) ? "fill-red" : "fill-shade-950"}
+                                class={currentBet.derive(bet => `${
+                                    value === 0 ? "fill-lime" : isRed(index) ? "fill-red" : "fill-shade-950"
+                                } ${
+                                    bet === value ? "fill-shade-500" : "hover:brightness-[2]"
+                                } z-50`)}
                             />
                             <text
                                 x={31}
@@ -88,7 +139,7 @@ function Wheel() {
                                 class={"fill-shade-50 text-[3px]"}
                                 transform={`rotate(${index / NUMBERS.length * 360} 32 32)`}
                             >{value}</text>
-                        </>
+                        </g>
                     ))}
                 </g>
             </g>
@@ -96,12 +147,12 @@ function Wheel() {
     );
 
     async function spinTo(target: number) {
-        g.style.transform = `rotate(-${target * 10 + 360 * 5}deg)`;
-        await new Promise(res => setTimeout(res, 10000))
+        g.style.transform = `rotate(-${target / NUMBERS.length * 360 + 360 * 5}deg)`;
+        await new Promise(res => setTimeout(res, SPIN_DURATION * 1000))
         g.style.transitionDuration = "0s";
-        g.style.transform = `rotate(-${target * 10}deg)`;
+        g.style.transform = `rotate(-${target / NUMBERS.length * 360}deg)`;
         await new Promise(res => setTimeout(res, 100));
-        g.style.transitionDuration = "10s";
+        g.style.transitionDuration = `${SPIN_DURATION}s`;
     }
 
     return [wheel, spinTo] as const;
