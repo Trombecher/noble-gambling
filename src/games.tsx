@@ -1,11 +1,12 @@
 import {Box, JSX, ReadonlyBox} from "aena";
 import {Roulette} from "./games/roulette";
-import {Poker} from "./games/poker";
+import {Poker} from "./games/pokerui";
 import {insertBox} from "aena/glue";
+import Slots from "./games/slotsui";
 
 export const GAME_MAP: readonly (readonly [string, Game])[] = [
     ["Roulette", Roulette],
-    // ["Slots", Slots],
+    ["Slots", Slots],
     ["Poker", Poker]
 ];
 
@@ -29,7 +30,7 @@ export function GameSelect({currentGame}: {currentGame: Box<Pair | undefined>}) 
                     <img
                         width={450}
                         height={300}
-                        src={`/${pair[0].toLowerCase()}.webp`}
+                        src={`/noble-gambling/${pair[0].toLowerCase()}.webp`}
                         alt={""}
                     />
                     <div
