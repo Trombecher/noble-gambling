@@ -1,6 +1,8 @@
 // types
 
-enum Rank{
+import {Box, BoxArray} from "aena";
+
+export enum Rank{
     Zero,
     Two = 2,
     Three,
@@ -16,12 +18,10 @@ enum Rank{
     King,
     Ace
 }
-let NUM_RANKS = 13
-
 // value array offset
 let vao = 2
 
-enum Suit{
+export enum Suit{
     Clubs,
     Hearts,
     Spades,
@@ -30,7 +30,7 @@ enum Suit{
 }
 let NUM_SUITS = 4
 
-enum HandType{
+export enum HandType{
     None,
     High,
     One_Pair,
@@ -56,12 +56,12 @@ enum Comp{
     Equal
 }
 
-class Card{
-    value: Rank;
+export class Card{
+    rank: Rank;
     suit: Suit;
 
     constructor(v: Rank, s:Suit){
-        this.value = v
+        this.rank = v
         this.suit = s
     }
 }
@@ -71,7 +71,7 @@ class Card{
 // along with the hand rank it also finds the relevant values for tiebreakers
 class Hand{
     tiebreakers: Rank[] = [];
-    rank = HandType.None
+    rank = new Box(HandType.None)
 
 
     private readonly input: Card[] = []
@@ -81,11 +81,11 @@ class Hand{
 
     private fillFlushSuit(suit: Suit){
         for (let card of this.input)
-            if (card.suit == suit) this.flush_suit_vals[card.value - vao]++
+            if (card.suit == suit) this.flush_suit_vals[card.rank - vao]++
     }
     private countProperties(){
         for (let card of this.input){
-            this.val_count[card.value - vao]++
+            this.val_count[card.rank - vao]++
             this.suit_count[card.suit]++
         }
     }
@@ -180,50 +180,50 @@ class Hand{
         }
 
         if (fl && this.isRoyal()){ 
-            this.rank = HandType.Royal_Flush
+            this.rank.value = HandType.Royal_Flush
         }
         else if (fl && sfl){
-            this.rank = HandType.Straight_Flush
+            this.rank.value = HandType.Straight_Flush
             this.tiebreakers.push(sfl)
         }
         else if (k4){
-            this.rank = HandType.Four_Kind
+            this.rank.value = HandType.Four_Kind
             pushTiebreakers(1, [k4])
         }
         else if (k3 && k2){
-            this.rank = HandType.Full_House
+            this.rank.value = HandType.Full_House
             pushTiebreakers(0, [k3, k2])
         }
         else if(fl){
-            this.rank = HandType.Flush
+            this.rank.value = HandType.Flush
             this.val_count = this.flush_suit_vals
             pushTiebreakers(5, [])
         }
         else if (str){
-            this.rank = HandType.Straight
+            this.rank.value = HandType.Straight
             this.tiebreakers.push(str)
         }
         else if (k3){
-            this.rank = HandType.Three_Kind
+            this.rank.value = HandType.Three_Kind
             pushTiebreakers(2, [k3])
         }
         else if (p2[0]){
-            this.rank = HandType.Two_Pair
+            this.rank.value = HandType.Two_Pair
             pushTiebreakers(1, p2)
         }
         else if (k2){
-            this.rank = HandType.One_Pair
+            this.rank.value = HandType.One_Pair
             pushTiebreakers(3, [k2])
         }
         else{
-            this.rank = HandType.High
+            this.rank.value = HandType.High
             pushTiebreakers(5, [])
         }
     }
 }
 
-class Player{
-    card: Card[] = []
+export class Player{
+    card: BoxArray<Card> = new BoxArray<Card>()
     cash: Money = 0
     bet: Money = 0
     hand: Hand = new Hand([])
@@ -231,8 +231,12 @@ class Player{
     is_all_in = false
 
     updateHand(mid: Card[]){
-        let input = [...this.card, ...mid]
+        let input = [...mid, ...this.card]
         this.hand = new Hand(input)
+    }
+
+    constructor() {
+        this.card.addListener(()=>{console.log(this.card)})
     }
 }
 
@@ -278,7 +282,7 @@ class Action{
     }
 }
 
-class Game{
+export class PokerTable{
     player: Player[] = []
     mid: Card[] = []
     pot: Money = 0
@@ -292,7 +296,7 @@ class Game{
     private current_player(){
         return this.player[this.current_player_id]!
     }
-    private reset(){
+    reset(){
         this.pot = 0
         this.to_match = 0
         this.last_to_raise = 0
@@ -301,7 +305,7 @@ class Game{
         this.dealer_id = (this.dealer_id + 1) % this.player.length
         this.current_player_id = this.dealer_id
         for (let p of this.player){
-            p.card = []
+            p.card.splice(0, p.card.length)
             p.bet = 0
             p.has_folded = false
             p.is_all_in = false
@@ -367,7 +371,7 @@ class Game{
         return not_in.length <= 1;
 
     }
-    private distribute(){
+    distribute(){
         for (let p of this.player){
             p.card.push(this.deck.pop() as Card)
             p.card.push(this.deck.pop() as Card)
@@ -448,8 +452,3 @@ class Game{
 function wait_for_action(): Action{
     return new Action(ActionType.Raise, 200)
 }
-
-let game = new Game
-game.addPlayers(2)
-game.giveAll(1000)
-console.log("------")
