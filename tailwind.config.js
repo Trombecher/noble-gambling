@@ -9,7 +9,7 @@ export default {
         },
         colors: {
             shade: {
-                50: '#ffffff',
+                50: '#CAD2C5',
                 100: '#eae7ea',
                 200: '#cbc6cf',
                 300: '#bdb3bf',

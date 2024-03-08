@@ -33,6 +33,6 @@ export function Button({
     ...props
 }: JSX.IntrinsicElements["button"]) {
     return (
-        <button class={`${className} bg-shade-900 py-1 rounded-full hover:bg-shade-800`} {...props}>{children}</button>
+        <button class={`${className} transition px-4 bg-shade-900 py-1 rounded-full hover:bg-shade-800 active:bg-shade-700`} {...props}>{children}</button>
     )
 }

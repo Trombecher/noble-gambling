@@ -19,36 +19,17 @@ export default function App() {
 
     return (
         <>
-            <header class={"sticky top-0 flex p-4 w-full select-none bg-green/50 backdrop-blur-2xl backdrop:saturate-200"}>
+            <header class={"z-50 sticky top-0 flex p-4 w-full select-none bg-gradient-to-t from-green/30 to-green backdrop-blur-2xl backdrop:saturate-200"}>
                 <button
                     onclick={() => currentPair.value = undefined}
                     class={"mr-auto text-shade-50 text-3xl"}
                 >Noble Gambling</button>
                 <div>${insertBoxAsText(balance)}</div>
             </header>
-            <CurrentGame
-                currentGame={currentPair}
-                balance={balance}
-            />
-            <h1 class={"mx-auto mb-6 font-semibold text-2xl text-shade-50"}>{insertBoxToString(currentPair, pair => pair ? "More Games" : "")}</h1>
-            <GameSelect
-                currentGame={currentPair}
-            />
+            <CurrentGame currentGame={currentPair} balance={balance}/>
+            <h1 class={"mx-auto mb-6 font-semibold text-2xl text-shade-50 mt-12"}>{insertBoxToString(currentPair, pair => pair ? "More Games" : "")}</h1>
+            <GameSelect currentGame={currentPair}/>
             <footer class={"py-6 mx-auto mt-auto"}>Copyright &copy; {new Date().getFullYear()} Robin, Niklas und Tobias</footer>
         </>
     );
 }
-
-/*
-
-<button class="Slots">
-    <img width="400" height="225" src="/Slots.jpg" alt=""/>
-</button>
-<button class="Roulette" onclick={() => game.value = Roulette}>
-    <img width="400" height="225" src="/Roulette.jpg" alt=""/>
-</button>
-<button class="Poker">
-    <img width="400" height="225" src="/Poker.jpg" alt=""/>
-</button>
-
-*/
