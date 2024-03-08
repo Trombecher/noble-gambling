@@ -41,7 +41,7 @@ export enum HandType{
     Full_House,
     Four_Kind,
     Straight_Flush,
-    Royal_Flush,
+    Royal_Flush_______________,
 }
 
 enum RevealType{
@@ -74,9 +74,9 @@ class Hand{
     rank = new Box(HandType.None)
 
 
-    private readonly input: Card[] = []
+    private input: Card[] = []
     private suit_count: number[] = [0, 0, 0, 0]
-    private readonly val_count: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    private val_count: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     private flush_suit_vals: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     private fillFlushSuit(suit: Suit){
@@ -155,9 +155,13 @@ class Hand{
         return Comp.Equal
     }
 
-    constructor(input: Card[]){
+    update(input: Card[]){
         if (!input.length) return
-        this.input = input
+        this.tiebreakers = []
+        this.input = [...input]
+        this.suit_count = [0, 0, 0, 0]
+        this.val_count = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        this.flush_suit_vals = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         this.countProperties()
 
         let fl = this.isFlush()
@@ -180,7 +184,7 @@ class Hand{
         }
 
         if (fl && this.isRoyal()){ 
-            this.rank.value = HandType.Royal_Flush
+            this.rank.value = HandType.Royal_Flush_______________
         }
         else if (fl && sfl){
             this.rank.value = HandType.Straight_Flush
@@ -226,17 +230,13 @@ export class Player{
     card: BoxArray<Card> = new BoxArray<Card>()
     cash: Money = 0
     bet: Money = 0
-    hand: Hand = new Hand([])
+    hand: Hand = new Hand
     has_folded = false
     is_all_in = false
 
     updateHand(mid: Card[]){
         let input = [...mid, ...this.card]
-        this.hand = new Hand(input)
-    }
-
-    constructor() {
-        this.card.addListener(()=>{console.log(this.card)})
+        this.hand.update(input)
     }
 }
 
@@ -284,7 +284,7 @@ class Action{
 
 export class PokerTable{
     player: Player[] = []
-    mid: Card[] = []
+    mid: BoxArray<Card> = new BoxArray
     pot: Money = 0
     to_match: Money = 0
     blind: Money = 25
@@ -300,7 +300,7 @@ export class PokerTable{
         this.pot = 0
         this.to_match = 0
         this.last_to_raise = 0
-        this.mid = []
+        this.mid.splice(0, this.mid.length)
         this.deck = shuffledDeck()
         this.dealer_id = (this.dealer_id + 1) % this.player.length
         this.current_player_id = this.dealer_id
@@ -309,7 +309,7 @@ export class PokerTable{
             p.bet = 0
             p.has_folded = false
             p.is_all_in = false
-            p.hand = new Hand([])
+            p.hand.update([])
         }
     }
     private setBet(amount: Money){
@@ -387,6 +387,11 @@ export class PokerTable{
         else this.mid.push(this.deck.pop() as Card)
 
         // show community cards to players \\
+    }
+
+    revealAll(){
+        for (let i = 0; i < 5; i++)
+            this.mid.push(this.deck.pop() as Card)
     }
 
     private wrapUp(){
