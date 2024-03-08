@@ -52,7 +52,11 @@ export default function App() {
                 >Noble Gambling
                 </button>
                 <h2 class={"text-3xl text-white/50"}>{insertBoxToString(currentPair, pair => pair ? pair[0] : "")}</h2>
-                <div class={"ml-auto"}>${insertBoxAsText(balance)}</div>
+                <button
+                    class={"ml-auto text-xl"}
+                    title={"Reset balance"}
+                    onclick={() => balance.value = 1000}
+                >${insertBoxAsText(balance)}</button>
             </header>
             <CurrentGame currentGame={currentPair} balance={balance}/>
             <GameSelect currentGame={currentPair}/>
