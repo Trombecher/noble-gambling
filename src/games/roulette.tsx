@@ -9,6 +9,7 @@ const NUMBERS = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 
 
 export const Roulette: Game = ({balance}) => {
     const moneyBet = new Box(0);
+    balance.addListener(balance => moneyBet.value > balance && (moneyBet.value = balance))
     const bet = new Box<Bet>("Red");
     const locked = new Box(false);
     const won = new Box<boolean | undefined>(undefined);
@@ -46,28 +47,43 @@ export const Roulette: Game = ({balance}) => {
                 <Button
                     disabled={locked}
                     onclick={async () => {
+                        // Pick random result
                         const result = Math.floor(Math.random() * NUMBERS.length);
+
+                        // Lock the inputs
                         locked.value = true;
+
+                        // Wait for spin end
                         await spin(result);
 
-                        if((bet.value === "Even" && result % 2 === 0)
-                            || (bet.value === "Odd" && result % 2 === 1)
-                            || (bet.value === "Red" && isRed(NUMBERS.indexOf(result)))
-                            || (bet.value === "Black" && !isRed(NUMBERS.indexOf(result)))) {
-                            balance.value += moneyBet.value;
-                            won.value = true;
-                        } else if(bet.value === result) {
+                        // Manage balance
+                        if(bet.value === result) {
                             balance.value += moneyBet.value * 36;
+                            won.value = true;
+                        } else if(bet.value === 0) {
+                            balance.value -= moneyBet.value;
+                            won.value = false;
+                        } else if((bet.value === "Even" && NUMBERS[result]! % 2 === 0)
+                            || (bet.value === "Odd" && NUMBERS[result]! % 2 === 1)
+                            || (bet.value === "Red" && isRed(result))
+                            || (bet.value === "Black" && !isRed(result))) {
+                            balance.value += moneyBet.value;
                             won.value = true;
                         } else {
                             balance.value -= moneyBet.value;
                             won.value = false;
                         }
+
+                        // Display win/lose message for 3s
                         await new Promise(resolve => setTimeout(resolve, 3000));
+
+                        // Unlock UI inputs
                         locked.value = false;
+
+                        // Clear win status
                         won.value = undefined;
                     }}
-                >Gamble
+                >Spin
                 </Button>
             </div>
         </>
@@ -102,10 +118,7 @@ function Wheel(
 ) {
     let g: SVGElement;
     const wheel = (
-        <svg
-            viewBox={"0 0 64 64"}
-            class={""}
-        >
+        <svg viewBox={"0 0 64 64"} class={"fill-none w-full h-full"}>
             <g
                 class={"transition [transform-origin:center] ease-out"}
                 ref={x => {
@@ -118,6 +131,12 @@ function Wheel(
                     <circle cx={32} cy={32} r={24} fill={"#000"}/>
                 </mask>
                 <circle cx={32} cy={32} r={32} class={"fill-brown"}/>
+                <path
+                    d="M28 50L32 54L36 50"
+                    class={"stroke-[0.5] stroke-shade-50"}
+                    stroke-linejoin={"round"}
+                    stroke-linecap={"round"}
+                />
                 <g mask={"url(#m)"}>
                     {NUMBERS.map((value, index) => (
                         <g

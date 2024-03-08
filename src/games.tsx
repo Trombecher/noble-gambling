@@ -21,7 +21,7 @@ export type GameName = Pair[0];
 
 export function GameSelect({currentGame}: {currentGame: Box<Pair | undefined>}) {
     return (
-        <main class={`flex flex-wrap justify-center gap-6`}>
+        <main class={`flex flex-wrap justify-center gap-6 p-6`}>
             {GAME_MAP.map((pair) => (
                 <button
                     onclick={() => currentGame.value = pair}
