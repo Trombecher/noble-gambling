@@ -1,35 +1,64 @@
-import {Box, addListenerRecursively} from "aena";
+import {Box} from "aena";
 import {insertBoxAsText, insertBoxToString} from "aena/glue";
 import {CurrentGame, GAME_MAP, GameSelect} from "./games";
 
-export default function App() {
-    const url = new URL(location.href);
-    const balance = new Box(+(url.searchParams.get("balance") || 1000));
-    const currentPair = new Box(GAME_MAP.find(
-        ([name]) => name === url.searchParams.get("game")));
+/**
+ * Code is bad but it works.
+ */
+function createState() {
+    const balance = new Box(localStorage["balance"] || 1000);
+    balance.addListener(balance => localStorage["balance"] = balance);
 
-    addListenerRecursively({balance, currentPair}, () => {
-        url.searchParams.set("balance", String(balance.value));
+    function getPair(name: string | null | undefined) {
+        return GAME_MAP.find(([n]) => n === name);
+    }
 
-        if(currentPair.value) url.searchParams.set("game", currentPair.value[0]);
+    let url = new URL(location.href);
+    const currentPair = new Box(getPair(url.searchParams.get("game")));
+
+    let poppedState = false;
+
+    currentPair.addListener(pair => {
+        if(poppedState) {
+            poppedState = false;
+            return;
+        }
+
+        if(pair) url.searchParams.set("game", pair[0]);
         else url.searchParams.delete("game");
 
         history.pushState(null, "", url);
     });
 
+    window.onpopstate = () => {
+        poppedState = true;
+        url = new URL(location.href);
+        currentPair.value = getPair(url.searchParams.get("game"));
+    };
+
+    return {balance, currentPair};
+}
+
+export default function App() {
+    const {balance, currentPair} = createState();
+
     return (
         <>
-            <header class={"z-50 sticky top-0 flex p-4 w-full select-none bg-gradient-to-t from-green/30 to-green backdrop-blur-2xl backdrop:saturate-200"}>
+            <header
+                class={"z-50 sticky top-0 gap-4 flex p-4 w-full select-none bg-gradient-to-t from-green/30 to-green backdrop-blur-2xl backdrop:saturate-200"}>
                 <button
                     onclick={() => currentPair.value = undefined}
-                    class={"mr-auto text-shade-50 text-3xl"}
-                >Noble Gambling</button>
-                <div>${insertBoxAsText(balance)}</div>
+                    class={"text-3xl"}
+                >Noble Gambling
+                </button>
+                <h2 class={"text-3xl text-white/50"}>{insertBoxToString(currentPair, pair => pair ? pair[0] : "")}</h2>
+                <div class={"ml-auto"}>${insertBoxAsText(balance)}</div>
             </header>
             <CurrentGame currentGame={currentPair} balance={balance}/>
-            <h1 class={"mx-auto mb-6 font-semibold text-2xl text-shade-50 mt-12"}>{insertBoxToString(currentPair, pair => pair ? "More Games" : "")}</h1>
             <GameSelect currentGame={currentPair}/>
-            <footer class={"py-6 mx-auto mt-auto"}>Copyright &copy; {new Date().getFullYear()} Robin, Niklas und Tobias</footer>
+            <footer class={"py-6 mx-auto mt-auto"}>Copyright &copy; {new Date().getFullYear()} Robin, Niklas und
+                Tobias
+            </footer>
         </>
     );
 }

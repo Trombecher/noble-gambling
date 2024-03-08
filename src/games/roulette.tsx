@@ -20,10 +20,18 @@ export const Roulette: Game = ({balance}) => {
             <div class={"select-none mx-auto w-full max-w-screen-md flex"}>
                 {wheel}
             </div>
+            <svg class={"self-center mt-3"} viewBox={"0 0 16 8"} width={"64"}>
+                <path
+                    d={"M2 7L8 1L14 7"}
+                    class={"fill-none stroke-[1.5] stroke-white"}
+                    stroke-linecap={"round"}
+                    stroke-linejoin={"round"}
+                />
+            </svg>
             {insertBox(won, won => won && (
                 <h2 class={"text-8xl"}>{won ? "Won" : "Lost"}</h2>
             ))}
-            <h2 class={"text-shade-50 text-2xl mb-6 self-center mt-8"}>Bet on a number or below:</h2>
+            <h2 class={"text-2xl mb-6 self-center mt-8"}>Bet on a number or below:</h2>
             <div class={"w-40 h-40 grid grid-cols-2 gap-2 mb-4 z-50 self-center"}>
                 {([
                     "Red",
@@ -102,8 +110,8 @@ function SelectBet({
     return (
         <button
             class={currentBet.derive(currentBet => `${
-                currentBet === bet ? "bg-red border-shade-50" : "hover:bg-shade-50/50 bg-shade-50/30 border-shade-50/30"
-            } rounded-full flex justify-center items-center text-shade-50 border-2`)}
+                currentBet === bet ? "bg-white/50 border-white" : "hover:bg-white/20 border-white/30"
+            } rounded-full flex justify-center items-center border transition`)}
             onclick={() => currentBet.value = bet}
             disabled={locked}
         >{bet}</button>
@@ -131,12 +139,6 @@ function Wheel(
                     <circle cx={32} cy={32} r={24} fill={"#000"}/>
                 </mask>
                 <circle cx={32} cy={32} r={32} class={"fill-brown"}/>
-                <path
-                    d="M28 50L32 54L36 50"
-                    class={"stroke-[0.5] stroke-shade-50"}
-                    stroke-linejoin={"round"}
-                    stroke-linecap={"round"}
-                />
                 <g mask={"url(#m)"}>
                     {NUMBERS.map((value, index) => (
                         <g
@@ -147,15 +149,15 @@ function Wheel(
                                 d={"M32 32L34.789 63.8782A32 32 0 0 1 29.211 63.8782"}
                                 transform={`rotate(${index / NUMBERS.length * 360} 32 32)`}
                                 class={currentBet.derive(bet => `${
-                                    value === 0 ? "fill-lime" : isRed(index) ? "fill-red" : "fill-shade-950"
+                                    value === 0 ? "fill-lime" : isRed(index) ? "fill-red" : "fill-black"
                                 } ${
-                                    bet === value ? "fill-shade-500" : "hover:brightness-[2]"
+                                    bet === value ? "brightness-[5]" : "hover:brightness-[2]"
                                 } z-50`)}
                             />
                             <text
                                 x={31}
                                 y={62}
-                                class={"fill-shade-50 text-[3px]"}
+                                class={"fill-white text-[3px]"}
                                 transform={`rotate(${index / NUMBERS.length * 360} 32 32)`}
                             >{value}</text>
                         </g>

@@ -8,19 +8,8 @@ export default {
             "mono": [...defaultTheme.fontFamily.mono],
         },
         colors: {
-            shade: {
-                50: '#CAD2C5',
-                100: '#eae7ea',
-                200: '#cbc6cf',
-                300: '#bdb3bf',
-                400: '#a59aac',
-                500: '#8e8298',
-                600: '#786b80',
-                700: '#5b5061',
-                800: '#37303B',
-                900: '#1D191F',
-                950: '#100E11'
-            },
+            white: "#CAD2C5",
+            black: "#100E11",
             green: "#034732",
             red: "#d62626",
             brown: "#2e1209",

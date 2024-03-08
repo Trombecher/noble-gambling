@@ -17,15 +17,13 @@ export type Game = (props: {
 
 export type Pair = typeof GAME_MAP[number];
 
-export type GameName = Pair[0];
-
 export function GameSelect({currentGame}: {currentGame: Box<Pair | undefined>}) {
     return (
         <main class={`flex flex-wrap justify-center gap-6 p-6`}>
             {GAME_MAP.map((pair) => (
                 <button
                     onclick={() => currentGame.value = pair}
-                    class={currentGame.derive(currentPair => `${currentPair === pair ? "hidden" : ""} block relative rounded-3xl overflow-hidden transition hover:brightness-75`)}
+                    class={currentGame.derive(currentPair => `${currentPair === pair ? "hidden" : ""} block relative rounded-3xl overflow-hidden transition-all shadow-black hover:shadow-xl hover:scale-110`)}
                 >
                     <img
                         width={450}
@@ -34,7 +32,7 @@ export function GameSelect({currentGame}: {currentGame: Box<Pair | undefined>}) 
                         alt={""}
                     />
                     <div
-                        class={"absolute bottom-0 left-0 p-6 text-3xl bg-gradient-to-b from-shade-950/0 to-shade-950 text-shade-50 w-full text-left"}>{pair[0]}</div>
+                        class={"absolute bottom-0 left-0 p-6 text-3xl bg-gradient-to-b from-black/0 to-black w-full text-left"}>{pair[0]}</div>
                 </button>
             ))}
         </main>
@@ -51,10 +49,6 @@ export function CurrentGame({
     currentGame: Readonly<Box<Pair | undefined>>,
     balance: Box<number>
 }) {
-    return insertBox(currentGame, game => game && (
-        <>
-            <h1 class={"text-2xl text-shade-50"}>{game[0]}</h1>
-            {game[1]({balance, name: game[0]})}
-        </>
-    ));
+    return insertBox(currentGame, game =>
+        game && game[1]({balance, name: game[0]}));
 }
