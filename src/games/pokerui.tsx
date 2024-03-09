@@ -10,15 +10,15 @@ const HAND_MAP = ["none", "High Card", "One Pair", "Two Pair", "Three of a Kind"
 const LOCAL_PLAYER = 0;
 
 export const Poker: Game = () => {
-    let game = new PokerTable;
-    game.addPlayers(1);
-    game.distribute();
-    game.revealAll();
-    game.player[0]!.updateHand([]);
+    let game = new PokerTable
+    game.addPlayers(1)
+    game.distribute()
+    game.revealAll()
+    game.player[LOCAL_PLAYER]!.updateHand(game.mid)
     return (
         <>
             <div class={"justify center"}>
-                {CommunityCards(game)}
+            {CommunityCards(game)}
                 {PlayerCards(game)}
             </div>
             <div class={"justify-center m-auto"}>
@@ -33,13 +33,14 @@ export const Poker: Game = () => {
     );
 };
 
-function UICard({card}: {card: Card}) {
+function UICard(card: Card, game: PokerTable): JSX.Element {
     return (
         <img
             src={`/noble-gambling/Cards/${RANK_MAP[card.rank]}_of_${SUIT_MAP[card.suit]}.png`}
             alt=""
             width={75}
             height={52}
+            class={game.player[LOCAL_PLAYER]!.hand.cards.derive<string>((cards) => cards.some((c) => c.rank == card.rank && c.suit == card.suit) ? "shadow-[0px_0px_10px_5px_rgba(255,255,0,0.3)]" : "")}
         />
     );
 }
@@ -47,9 +48,9 @@ function UICard({card}: {card: Card}) {
 function CommunityCards(game: PokerTable): JSX.Element {
     return (
         <div class={`flex gap-6 p-6 pb-16 justify-center`}>
-            {insertBoxArray(game.mid, card => <UICard card={card}/>)}
+            {insertBoxArray(game.mid, card => UICard(card, game))}
         </div>
-    );
+    )
 }
 
 function PlayerCards(game: PokerTable): JSX.Element {
@@ -57,7 +58,7 @@ function PlayerCards(game: PokerTable): JSX.Element {
         <>
             <div class={`ml-auto p-6`}>
                 <div class={"justify-center flex gap-6"}>
-                    {insertBoxArray(game.player[LOCAL_PLAYER]!.card, card => <UICard card={card}/>)}
+                    {insertBoxArray(game.player[LOCAL_PLAYER]!.card, card => UICard(card, game))}
                 </div>
                 <div class={"text-center mt-4"}>{insertBoxToString(
                     game.player[LOCAL_PLAYER]!.hand.rank,
@@ -65,5 +66,5 @@ function PlayerCards(game: PokerTable): JSX.Element {
                 )}</div>
             </div>
         </>
-    );
+    )
 }

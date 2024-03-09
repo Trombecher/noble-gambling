@@ -4,7 +4,8 @@ import {Box, BoxArray} from "aena";
 
 export enum Rank{
     Zero,
-    Two = 2,
+    One,
+    Two,
     Three,
     Four,
     Five,
@@ -41,8 +42,9 @@ export enum HandType{
     Full_House,
     Four_Kind,
     Straight_Flush,
-    Royal_Flush_______________,
+    Royal_Flush,
 }
+export let stats: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 enum RevealType{
     Flop,
@@ -69,8 +71,9 @@ export class Card{
 // handles everything around hands
 // constructor() takes any amount of cards as input and finds the best hand among them
 // along with the hand rank it also finds the relevant values for tiebreakers
-class Hand{
+export class Hand{
     tiebreakers: Rank[] = [];
+    cards = new Box(new Array<Card>)
     rank = new Box(HandType.None)
 
 
@@ -114,7 +117,7 @@ class Hand{
         let count = (t == HandType.Flush) ? this.flush_suit_vals : this.val_count
 
         // finds if a straight with starting index 'i' exists
-        // allows wraps from ace to two
+        // allows wraps from ace to two - no around-the-corner-straights
         let callback = (i: number): boolean => {
             let j = i + 5
             for (;i < j; i++)
@@ -122,21 +125,19 @@ class Hand{
             return true
         }
         // straights are generally ranked by their highest value cards
-        if (callback(Rank.Ten - vao)) return Rank.Ace + 1 // best straight is royal
-        for (let v = Rank.Jack; v <= Rank.Ace; v++)       // then all others containing an ace 
+        for (let v = Rank.Ten; v >= Rank.Two; v--)       // the rest
             if (callback(v - vao)) return v
-        for (let v = Rank.Nine; v >= Rank.Two; v--)       // the rest
-            if (callback(v - vao)) return v
+        if (callback(Rank.Ace - vao)) return Rank.One
         
         return Rank.Zero
     }
-    private isFlush(): boolean{
+    private isFlush(): Suit{
         for (let s = Suit.Clubs; s < NUM_SUITS; s++)
             if (this.suit_count[s]! >= 5){
                 this.fillFlushSuit(s)
-                return true
+                return s + 1
             }
-        return false
+        return 0
     }
     private isRoyal(): boolean{
         for (let v = Rank.Ten; v <= Rank.Ace; v++)
@@ -183,45 +184,67 @@ class Hand{
             }
         }
 
+        let compareFunction = (c1: Card, c2: Card) =>{
+            if (c1.rank > c2.rank) return -1
+            if (c1.rank < c2.rank) return 1
+            return 0
+        }
+
         if (fl && this.isRoyal()){ 
-            this.rank.value = HandType.Royal_Flush_______________
+            this.rank.value = HandType.Royal_Flush
+            this.cards.value = [new Card(Rank.Ace, fl - 1), new Card(Rank.Jack, fl - 1), new Card(Rank.King, fl - 1), new Card(Rank.Queen, fl - 1), new Card(Rank.Ten, fl - 1)]
         }
         else if (fl && sfl){
             this.rank.value = HandType.Straight_Flush
             this.tiebreakers.push(sfl)
+            let no1 = (sfl == 1) ? Rank.Ace : sfl
+            this.cards.value = [new Card(no1, fl - 1), new Card(sfl + 1, fl - 1), new Card(sfl + 2, fl - 1), new Card(sfl + 3, fl - 1), new Card(sfl + 4, fl - 1)]
         }
         else if (k4){
             this.rank.value = HandType.Four_Kind
             pushTiebreakers(1, [k4])
+            this.cards.value = [...input.filter((card) => card.rank == k4)]
         }
         else if (k3 && k2){
             this.rank.value = HandType.Full_House
             pushTiebreakers(0, [k3, k2])
+            this.cards.value = [...input.filter((card) => card.rank == k3 || card.rank == k2)]
         }
         else if(fl){
             this.rank.value = HandType.Flush
             this.val_count = this.flush_suit_vals
             pushTiebreakers(5, [])
+            let col = input.filter((card) => card.suit == fl - 1)
+            col.sort(compareFunction)
+            this.cards.value = [col[0]!, col[1]!, col[2]!, col[3]!, col[4]!]
         }
         else if (str){
             this.rank.value = HandType.Straight
             this.tiebreakers.push(str)
+            let a = this.input.filter((c) => (str <= c.rank) && (c.rank <= str + 4))
+            if (str == Rank.One) a.push(this.input.find((c) => c.rank == Rank.Ace) as Card)
+            a = a.filter((item, pos)=> a.findIndex((c) => c.rank == item.rank) == pos)
+            this.cards.value = [...a]
         }
         else if (k3){
             this.rank.value = HandType.Three_Kind
             pushTiebreakers(2, [k3])
+            this.cards.value = [...input.filter((card) => card.rank == k3)]
         }
         else if (p2[0]){
             this.rank.value = HandType.Two_Pair
             pushTiebreakers(1, p2)
+            this.cards.value = [...input.filter((card) => card.rank == p2[0] || card.rank == p2[1])]
         }
         else if (k2){
             this.rank.value = HandType.One_Pair
             pushTiebreakers(3, [k2])
+            this.cards.value = [...input.filter((card) => card.rank == k2)]
         }
         else{
             this.rank.value = HandType.High
             pushTiebreakers(5, [])
+            this.cards.value = [input.sort(compareFunction)[0]!]
         }
     }
 }
@@ -237,6 +260,7 @@ export class Player{
     updateHand(mid: Card[]){
         let input = [...mid, ...this.card]
         this.hand.update(input)
+        stats[this.hand.rank.value]++
     }
 }
 
