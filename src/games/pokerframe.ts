@@ -44,9 +44,8 @@ export enum HandType{
     Straight_Flush,
     Royal_Flush,
 }
-export let stats: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-enum RevealType{
+export enum RevealType{
     Flop,
     Turn,
     River
@@ -66,6 +65,12 @@ export class Card{
         this.rank = v
         this.suit = s
     }
+}
+
+function compareFunction(c1: Card, c2: Card){
+    if (c1.rank > c2.rank) return -1
+    if (c1.rank < c2.rank) return 1
+    return 0
 }
 
 // handles everything around hands
@@ -177,17 +182,11 @@ export class Hand{
         let pushTiebreakers = (n: number, exclude: Rank[]) => {
             if (exclude.length) this.tiebreakers.push(...exclude)
 
-            for (let i = 0; i < n; i++){
+            for (let i = 0; i < n; i++) {
                 let next = this.highestCard(exclude)
                 this.tiebreakers.push(next)
                 exclude.push(next)
             }
-        }
-
-        let compareFunction = (c1: Card, c2: Card) =>{
-            if (c1.rank > c2.rank) return -1
-            if (c1.rank < c2.rank) return 1
-            return 0
         }
 
         if (fl && this.isRoyal()){ 
@@ -260,7 +259,6 @@ export class Player{
     updateHand(mid: Card[]){
         let input = [...mid, ...this.card]
         this.hand.update(input)
-        stats[this.hand.rank.value]++
     }
 }
 
@@ -306,7 +304,7 @@ class Action{
     }
 }
 
-export class PokerTable{
+export class PokerTable {
     player: Player[] = []
     mid: BoxArray<Card> = new BoxArray
     pot: Money = 0
@@ -315,12 +313,13 @@ export class PokerTable{
     dealer_id = 0
     private current_player_id = 0
     private last_to_raise = 0
-    private deck = shuffledDeck()
+    deck = shuffledDeck()
 
-    private current_player(){
+    private current_player() {
         return this.player[this.current_player_id]!
     }
-    reset(){
+
+    reset() {
         this.pot = 0
         this.to_match = 0
         this.last_to_raise = 0
@@ -328,7 +327,7 @@ export class PokerTable{
         this.deck = shuffledDeck()
         this.dealer_id = (this.dealer_id + 1) % this.player.length
         this.current_player_id = this.dealer_id
-        for (let p of this.player){
+        for (let p of this.player) {
             p.card.splice(0, p.card.length)
             p.bet = 0
             p.has_folded = false
@@ -336,92 +335,99 @@ export class PokerTable{
             p.hand.update([])
         }
     }
-    private setBet(amount: Money){
+
+    private setBet(amount: Money) {
         this.current_player().bet += amount
         this.current_player().cash -= amount
         this.pot += amount
         // update pot and show players their new net worth and bet \\
     }
 
-    private check(){
+    private check() {
         let increase = this.to_match - this.current_player().bet
         this.setBet(increase)
     }
-    private raise(amount: Money){ // minimum allowed raise should be the amount of a big blind (2 * blind)
+
+    private raise(amount: Money) { // minimum allowed raise should be the amount of a big blind (2 * blind)
         this.setBet(amount)
         this.to_match = this.current_player().bet
         this.last_to_raise = this.current_player_id
     }
-    private fold(){
+
+    private fold() {
         this.current_player().has_folded = true
     }
-    private allIn(){
+
+    private allIn() {
         this.current_player().is_all_in = true
         this.raise(this.current_player().cash)
     }
-    private act(action: Action){
-        if      (action.kind == ActionType.Check)   this.check()
-        else if (action.kind == ActionType.Raise)   this.raise(action.amount)
-        else if (action.kind == ActionType.Fold)    this.fold()
-        else if (action.kind == ActionType.All_In)  this.allIn()
+
+    private act(action: Action) {
+        if (action.kind == ActionType.Check) this.check()
+        else if (action.kind == ActionType.Raise) this.raise(action.amount)
+        else if (action.kind == ActionType.Fold) this.fold()
+        else if (action.kind == ActionType.All_In) this.allIn()
     }
 
     // gets next player
     // considers wraps
     // returns false if the betting round is over
-    private nextPlayer(): boolean{
-        do{
+    private nextPlayer(): boolean {
+        do {
             this.current_player_id = (this.current_player_id + 1) % this.player.length
             if (this.current_player_id == this.last_to_raise) return false
-        }while(this.current_player().has_folded || this.current_player().is_all_in)
+        } while (this.current_player().has_folded || this.current_player().is_all_in)
 
         return true
     }
 
-    private updateHands(){
+    private updateHands() {
         for (let players of this.player)
             players.updateHand(this.mid)
-            
+
         // show each player what their current best hand looks like? \\
     }
+
     // returns true if all players except one have folded or are all in
-    private betRound(): boolean{
+    private betRound(): boolean {
         this.updateHands()
-        do{
+        do {
             this.act(wait_for_action()) // let the player choose their action \\
-        }while(this.nextPlayer())
+        } while (this.nextPlayer())
 
         let not_in = this.player.filter((player) => !player.has_folded && !player.is_all_in)
         return not_in.length <= 1;
 
     }
-    distribute(){
-        for (let p of this.player){
+
+    distribute() {
+        for (let p of this.player) {
             p.card.push(this.deck.pop() as Card)
             p.card.push(this.deck.pop() as Card)
         }
 
         // show players their cards \\
     }
-    private revealMid(stage: RevealType){
-        if (stage == RevealType.Flop){
+
+    revealMid(stage: RevealType) {
+        if (stage == RevealType.Flop) {
             for (let i = 0; i < 3; i++)
                 this.mid.push(this.deck.pop() as Card)
-        }
-        else this.mid.push(this.deck.pop() as Card)
+        } else this.mid.push(this.deck.pop() as Card)
 
         // show community cards to players \\
     }
 
-    revealAll(){
+    revealAll() {
         for (let i = 0; i < 5; i++)
             this.mid.push(this.deck.pop() as Card)
     }
 
-    private wrapUp(){
+    private wrapUp() {
         // if all players except one have folded before all community cards have been shown
         // this shows the remaining cards and updates player hands
-        if (this.mid.length < 5){
+        if (this.mid.length < 5) {
             for (let i = 0; i < 5 - this.mid.length; i++)
                 this.mid.push(this.deck.pop() as Card)
 
@@ -431,10 +437,10 @@ export class PokerTable{
         let not_folded = this.player.filter((player) => !player.has_folded)
         let winners = [not_folded[0]]
         not_folded.splice(0, 1)
-        for (let player of not_folded){
+        for (let player of not_folded) {
             let res = player.hand.compare(winners[0]!.hand)
-            if      (res == Comp.Greater)   winners = [player]
-            else if (res == Comp.Equal)     winners.push(player)
+            if (res == Comp.Greater) winners = [player]
+            else if (res == Comp.Equal) winners.push(player)
         }
 
         for (let winner of winners) // splits pot equally among winners (no side pots etc.)
@@ -442,7 +448,8 @@ export class PokerTable{
 
         // show players their new net worth \\
     }
-    private setBlinds(){
+
+    private setBlinds() {
         this.current_player_id -= 2
         this.raise(this.blind)
         this.nextPlayer()
@@ -451,13 +458,13 @@ export class PokerTable{
     }
 
     // Runs one full game, decides on the winners and pays out
-    start(){
+    start() {
         this.distribute()       // distributes cards to the players (pre-flop)
-        this.setBlinds()        
+        this.setBlinds()
         if (!this.betRound())   // runs the first round of betting
 
             // runs three betting rounds
-            for (let stage = RevealType.Flop; stage <= RevealType.River; stage++){
+            for (let stage = RevealType.Flop; stage <= RevealType.River; stage++) {
                 this.revealMid(stage)   // in stages - reveals the community cards (flop, turn, river)
                 if (this.betRound()) break
             }
@@ -466,18 +473,91 @@ export class PokerTable{
         this.reset()
     }
 
-    addPlayers(n: number){
+    addPlayers(n: number) {
         for (let i = 0; i < n; i++)
             this.player.push(new Player)
     }
-    giveAll(amount: Money){
+
+    giveAll(amount: Money) {
         for (let p of this.player)
             p.cash += amount
     }
 }
 
-
-
 function wait_for_action(): Action{
     return new Action(ActionType.Raise, 200)
+}
+
+export class Probability{
+    deck: Card[] = [...full_deck]
+    hand = new Hand
+    relative_us = new BoxArray<number>
+    relative_them = new BoxArray<number>
+    expect_us = new Box(0)
+    expect_them = new Box(0)
+
+    private overall = 0
+    private absolute = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    private expect = 0
+
+    private reduceDeck(us: Card[], mid: Card[]){
+        this.deck = [...full_deck]
+        for (let c of [...us, ...mid])
+            this.deck = this.deck.filter((card) => card.rank != c.rank || card.suit != c.suit)
+    }
+
+    private layer(i: number, n: number, c: Card[]){
+        for (let j = i + 1; j < this.deck.length; j++){
+            c.push(this.deck[j]!)
+            if (n) this.layer(j, n - 1, c)
+            else{
+                this.hand.update([...c])
+                this.absolute[this.hand.rank.value - 1]++
+                this.overall++
+            }
+            c.pop()
+        }
+    }
+
+    private detailed_layer(i: number, n:number, c: Card[]){
+        for (let j = i + 1; j < this.deck.length; j++){
+            c.push(this.deck[j]!)
+            if (n) this.detailed_layer(j, n - 1, c)
+            else{
+                this.hand.update([...c])
+                let diff = 0
+                for (let t of this.hand.tiebreakers)
+                    diff += (t - vao) / (12 * this.hand.tiebreakers.length)
+
+                this.expect += this.hand.rank.value + diff
+                this.overall++
+            }
+            c.pop()
+        }
+    }
+
+    private resetShit(){
+        this.overall = 0
+        this.expect = 0
+        this.absolute = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+
+    private fullRun(n: number, c: Card[], relative: BoxArray<number>, expect: Box<number>){
+        this.layer(0, n - 1, c)
+        relative.splice(0, relative.length)
+        for (let a of this.absolute)
+            relative.push(a / this.overall)
+        this.resetShit()
+
+        this.detailed_layer(0, n - 1, c)
+        expect.value = this.expect / this.overall
+        this.resetShit()
+    }
+
+    run(mid: Card[], us: Card[]){
+        this.reduceDeck(us, mid)
+
+        this.fullRun(7 - us.length - mid.length, [...us, ...mid], this.relative_us, this.expect_us)
+        this.fullRun(7 - mid.length, [...mid], this.relative_them, this.expect_them)
+    }
 }

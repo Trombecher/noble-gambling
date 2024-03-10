@@ -1,5 +1,5 @@
 import {Game} from "../games";
-import {Card, PokerTable} from "./pokerframe";
+import {Card, PokerTable, Probability, RevealType} from "./pokerframe";
 import {insertBoxArray, insertBoxToString} from "aena/glue";
 import {JSX} from "aena";
 import {Button} from "../components";
@@ -13,25 +13,46 @@ export const Poker: Game = () => {
     let game = new PokerTable
     game.addPlayers(1)
     game.distribute()
-    game.revealAll()
+    game.revealMid(RevealType.Flop);
     game.player[LOCAL_PLAYER]!.updateHand(game.mid)
+    let prob = new Probability()
+    prob.run(game.mid, game.player[LOCAL_PLAYER]!.card)
     return (
         <>
             <div class={"justify center"}>
-            {CommunityCards(game)}
+                {CommunityCards(game)}
                 {PlayerCards(game)}
             </div>
             <div class={"justify-center m-auto"}>
                 <Button onclick={() => {
                     game.reset();
                     game.distribute();
-                    game.revealAll();
+                    game.revealMid(RevealType.Flop);
                     game.player[LOCAL_PLAYER]!.updateHand(game.mid);
+                    prob.run(game.mid, game.player[LOCAL_PLAYER]!.card)
                 }}>Reload</Button>
+            </div>
+            <div class={"justify-center rounded-xl bg-white m-auto p-4 mt-3 text-black text-lg"}>
+                {stats(prob)}
             </div>
         </>
     );
 };
+
+function stats(prob: Probability): JSX.Element{
+    return (
+        <>
+            <p>{insertBoxToString(prob.expect_us, (n) => (Math.round(100 * n) / 100).toString())}</p>
+            <p>{insertBoxToString(prob.expect_them, (n) => (Math.round(100 * n) / 100).toString())}</p>
+            <div class={"flex gap-2"}>
+                {insertBoxArray(prob.relative_us, (n) => <p>{Math.round(10000 * n) / 100}</p>)}
+            </div>
+            <div class={"flex gap-2"}>
+                {insertBoxArray(prob.relative_them, (n) => <p>{Math.round(10000 * n) / 100}</p>)}
+            </div>
+        </>
+)
+}
 
 function UICard(card: Card, game: PokerTable): JSX.Element {
     return (
