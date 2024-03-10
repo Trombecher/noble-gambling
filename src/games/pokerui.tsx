@@ -21,7 +21,10 @@ export const Poker: Game = () => {
         <>
             <div class={"justify center"}>
                 {CommunityCards(game)}
-                {PlayerCards(game)}
+                <div class={"flex ml-auto justify-center gap-16"}>
+                    {unknownCards()}
+                    {PlayerCards(game, prob)}
+                </div>
             </div>
             <div class={"justify-center m-auto"}>
                 <Button onclick={() => {
@@ -29,6 +32,7 @@ export const Poker: Game = () => {
                     game.distribute();
                     game.revealMid(RevealType.Flop);
                     game.player[LOCAL_PLAYER]!.updateHand(game.mid);
+                    prob.winP(game.mid, game.player[LOCAL_PLAYER]!.card)
                     prob.run(game.mid, game.player[LOCAL_PLAYER]!.card)
                 }}>Reload</Button>
             </div>
@@ -54,6 +58,25 @@ function stats(prob: Probability): JSX.Element{
 )
 }
 
+function unknownCards(): JSX.Element{
+    return (
+        <div class={"flex gap-6 p-6 items-start"}>
+            <img
+                src={`/noble-gambling/Cards/back.png`}
+                alt=""
+                width={75}
+                height={52}
+            />
+            <img
+                src={`/noble-gambling/Cards/back.png`}
+                alt=""
+                width={75}
+                height={52}
+            />
+        </div>
+    )
+}
+
 function UICard(card: Card, game: PokerTable): JSX.Element {
     return (
         <img
@@ -70,21 +93,36 @@ function CommunityCards(game: PokerTable): JSX.Element {
     return (
         <div class={`flex gap-6 p-6 pb-16 justify-center`}>
             {insertBoxArray(game.mid, card => UICard(card, game))}
+            <img
+                src={`/noble-gambling/Cards/back.png`}
+                alt=""
+                width={75}
+                height={52}
+                class={"opacity-60"}
+            />
+            <img
+                src={`/noble-gambling/Cards/back.png`}
+                alt=""
+                width={75}
+                height={52}
+                class={"opacity-60"}
+            />
         </div>
     )
 }
 
-function PlayerCards(game: PokerTable): JSX.Element {
+function PlayerCards(game: PokerTable, prob: Probability): JSX.Element {
     return (
         <>
-            <div class={`ml-auto p-6`}>
+            <div class={`p-6`}>
                 <div class={"justify-center flex gap-6"}>
                     {insertBoxArray(game.player[LOCAL_PLAYER]!.card, card => UICard(card, game))}
                 </div>
-                <div class={"text-center mt-4"}>{insertBoxToString(
-                    game.player[LOCAL_PLAYER]!.hand.rank,
-                    rank => HAND_MAP[rank]!
-                )}</div>
+                <div class={"text-center mt-4"}>
+                    <p>{insertBoxToString(game.player[LOCAL_PLAYER]!.hand.rank, rank => HAND_MAP[rank]!)}</p>
+                    <p>{insertBoxToString(prob.winning_prob, prob => (Math.round(10000 * prob) / 100).toString())}%</p>
+                    <p>{insertBoxToString(prob.tie_prob, prob => (Math.round(10000 * prob) / 100).toString())}%</p>
+                </div>
             </div>
         </>
     )

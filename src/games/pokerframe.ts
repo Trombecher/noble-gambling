@@ -151,8 +151,8 @@ export class Hand{
     }
 
     compare(other: Hand): Comp{
-        if (this.rank > other.rank) return Comp.Greater
-        if (this.rank < other.rank) return Comp.Smaller
+        if (this.rank.value > other.rank.value) return Comp.Greater
+        if (this.rank.value < other.rank.value) return Comp.Smaller
 
         for (let i = 0; i < this.tiebreakers.length; i++){
             if (this.tiebreakers[i]! > other.tiebreakers[i]!) return Comp.Greater
@@ -490,15 +490,18 @@ function wait_for_action(): Action{
 
 export class Probability{
     deck: Card[] = [...full_deck]
-    hand = new Hand
     relative_us = new BoxArray<number>
     relative_them = new BoxArray<number>
     expect_us = new Box(0)
     expect_them = new Box(0)
+    winning_prob = new Box(0)
+    tie_prob = new Box(0)
 
     private overall = 0
     private absolute = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     private expect = 0
+    private hand = new Hand
+    private testing_hand = new Hand
 
     private reduceDeck(us: Card[], mid: Card[]){
         this.deck = [...full_deck]
@@ -507,9 +510,9 @@ export class Probability{
     }
 
     private layer(i: number, n: number, c: Card[]){
-        for (let j = i + 1; j < this.deck.length; j++){
+        for (let j = i; j < this.deck.length; j++){
             c.push(this.deck[j]!)
-            if (n) this.layer(j, n - 1, c)
+            if (n) this.layer(j + 1, n - 1, c)
             else{
                 this.hand.update([...c])
                 this.absolute[this.hand.rank.value - 1]++
@@ -520,9 +523,9 @@ export class Probability{
     }
 
     private detailed_layer(i: number, n:number, c: Card[]){
-        for (let j = i + 1; j < this.deck.length; j++){
+        for (let j = i; j < this.deck.length; j++){
             c.push(this.deck[j]!)
-            if (n) this.detailed_layer(j, n - 1, c)
+            if (n) this.detailed_layer(j + 1, n - 1, c)
             else{
                 this.hand.update([...c])
                 let diff = 0
@@ -559,5 +562,50 @@ export class Probability{
 
         this.fullRun(7 - us.length - mid.length, [...us, ...mid], this.relative_us, this.expect_us)
         this.fullRun(7 - mid.length, [...mid], this.relative_them, this.expect_them)
+    }
+
+    private pLayer2(c: Card[], e: number[]){
+        for (let i= 0; i < this.deck.length; i++){
+            if (e.includes(i)) continue
+            c.push(this.deck[i]!)
+            for (let j = i + 1; j < this.deck.length; j++) {
+                if (e.includes(j)) continue
+
+                c.push(this.deck[j]!)
+                this.testing_hand.update([...c])
+                // this.absolute[this.testing_hand.rank.value - 1]++
+                let comp = this.hand.compare(this.testing_hand)
+                if (comp == Comp.Equal) this.absolute[1]++
+                if (comp == Comp.Greater) this.absolute[0]++
+                this.overall++
+                c.pop()
+
+            }
+            c.pop()
+        }
+    }
+
+    private pLayer1(i: number, n: number, c : Card[], us: Card[], e: number[]){
+        for (let j = i; j < this.deck.length; j++){
+            e.push(j)
+            c.push(this.deck[j]!)
+            if (n) this.pLayer1(j + 1, n - 1, c, us, e)
+            else{
+                this.hand.update([...c, ...us])
+                this.pLayer2(c, e)
+            }
+            c.pop()
+            e.pop()
+        }
+    }
+
+    winP(mid: Card[], us: Card[]){
+        this.reduceDeck(us, mid)
+        this.pLayer1(0, 4 - mid.length, [...mid], us, [])
+        this.winning_prob.value = this.absolute[0]! / this.overall
+        this.tie_prob.value = this.absolute[1]! / this.overall
+        // for (let i = 0; i < this.absolute.length; i++) this.absolute[i] /= this.overall
+        console.log(this.absolute)
+        this.resetShit()
     }
 }
