@@ -19,40 +19,54 @@ export const Poker: Game = () => {
     prob.run(game.mid, game.player[LOCAL_PLAYER]!.card)
     return (
         <>
-            <div class={"justify center"}>
-                {CommunityCards(game)}
-                <div class={"flex ml-auto justify-center gap-16"}>
-                    {unknownCards()}
-                    {PlayerCards(game, prob)}
+            <div class={"flex justify-center gap-4"}>
+                <div class={"rounded-md bg-white p-4 ml-4 mt-4 mb-auto text-black text-lg"}>
+                    {stats(prob)}
+                </div>
+                <div>
+                    {CommunityCards(game)}
+                    <div class={"flex ml-auto justify-center gap-16"}>
+                        {unknownCards()}
+                        {PlayerCards(game, prob)}
+                    </div>
                 </div>
             </div>
-            <div class={"justify-center m-auto"}>
-                <Button onclick={() => {
-                    game.reset();
-                    game.distribute();
-                    game.revealMid(RevealType.Flop);
-                    game.player[LOCAL_PLAYER]!.updateHand(game.mid);
-                    prob.winP(game.mid, game.player[LOCAL_PLAYER]!.card)
-                    prob.run(game.mid, game.player[LOCAL_PLAYER]!.card)
-                }}>Reload</Button>
-            </div>
-            <div class={"justify-center rounded-xl bg-white m-auto p-4 mt-3 text-black text-lg"}>
-                {stats(prob)}
-            </div>
+            <Button class={"m-auto"} onclick={() => {
+                game.reset();
+                game.distribute();
+                game.revealMid(RevealType.Flop);
+                game.player[LOCAL_PLAYER]!.updateHand(game.mid);
+                prob.run(game.mid, game.player[LOCAL_PLAYER]!.card)
+            }}>Reload</Button>
         </>
     );
 };
 
-function stats(prob: Probability): JSX.Element{
+function stats(prob: Probability): JSX.Element {
     return (
         <>
-            <p>{insertBoxToString(prob.expect_us, (n) => (Math.round(100 * n) / 100).toString())}</p>
-            <p>{insertBoxToString(prob.expect_them, (n) => (Math.round(100 * n) / 100).toString())}</p>
-            <div class={"flex gap-2"}>
-                {insertBoxArray(prob.relative_us, (n) => <p>{Math.round(10000 * n) / 100}</p>)}
-            </div>
-            <div class={"flex gap-2"}>
-                {insertBoxArray(prob.relative_them, (n) => <p>{Math.round(10000 * n) / 100}</p>)}
+            <div class={"flex gap-8"}>
+                <div>
+                <p class={"font-bold"}>Odds</p>
+                    <p>High Card</p>
+                    <p>One Pair</p>
+                    <p>Two Pair</p>
+                    <p>Three Kind</p>
+                    <p>Straight</p>
+                    <p>Flush</p>
+                    <p>Full House</p>
+                    <p>Four Kind</p>
+                    <p>Straight Flush</p>
+                    <p>Royal Flush</p>
+                </div>
+                <div>
+                    <p>You</p>
+                    {insertBoxArray(prob.relative_us, (n) => <p>{Math.round(100 * n)}%</p>)}
+                </div>
+                <div>
+                    <p>Enemy</p>
+                    {insertBoxArray(prob.relative_them, (n) => <p>{Math.round(100 * n)}%</p>)}
+                </div>
             </div>
         </>
 )
@@ -120,8 +134,8 @@ function PlayerCards(game: PokerTable, prob: Probability): JSX.Element {
                 </div>
                 <div class={"text-center mt-4"}>
                     <p>{insertBoxToString(game.player[LOCAL_PLAYER]!.hand.rank, rank => HAND_MAP[rank]!)}</p>
-                    <p>{insertBoxToString(prob.winning_prob, prob => (Math.round(10000 * prob) / 100).toString())}%</p>
-                    <p>{insertBoxToString(prob.tie_prob, prob => (Math.round(10000 * prob) / 100).toString())}%</p>
+                    <p class={"text-lime"}>Win: {insertBoxToString(prob.winning_prob, prob => (Math.round(100 * prob)).toString())}%</p>
+                    <p class={"text-[#baa716]"}>Tie: {insertBoxToString(prob.tie_prob, prob => (Math.round(100 * prob)).toString())}%</p>
                 </div>
             </div>
         </>

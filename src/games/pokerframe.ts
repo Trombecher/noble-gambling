@@ -492,14 +492,16 @@ export class Probability{
     deck: Card[] = [...full_deck]
     relative_us = new BoxArray<number>
     relative_them = new BoxArray<number>
-    expect_us = new Box(0)
-    expect_them = new Box(0)
     winning_prob = new Box(0)
     tie_prob = new Box(0)
 
-    private overall = 0
-    private absolute = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    private expect = 0
+    private overall_us = 0
+    private overall_them = 0
+    private overall_exact = 0
+    private absolute_us = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    private absolute_them = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    private result = [0, 0]
+    private result_exact = [0, 0]
     private hand = new Hand
     private testing_hand = new Hand
 
@@ -509,62 +511,37 @@ export class Probability{
             this.deck = this.deck.filter((card) => card.rank != c.rank || card.suit != c.suit)
     }
 
-    private layer(i: number, n: number, c: Card[]){
-        for (let j = i; j < this.deck.length; j++){
-            c.push(this.deck[j]!)
-            if (n) this.layer(j + 1, n - 1, c)
-            else{
-                this.hand.update([...c])
-                this.absolute[this.hand.rank.value - 1]++
-                this.overall++
-            }
-            c.pop()
-        }
-    }
-
-    private detailed_layer(i: number, n:number, c: Card[]){
-        for (let j = i; j < this.deck.length; j++){
-            c.push(this.deck[j]!)
-            if (n) this.detailed_layer(j + 1, n - 1, c)
-            else{
-                this.hand.update([...c])
-                let diff = 0
-                for (let t of this.hand.tiebreakers)
-                    diff += (t - vao) / (12 * this.hand.tiebreakers.length)
-
-                this.expect += this.hand.rank.value + diff
-                this.overall++
-            }
-            c.pop()
-        }
-    }
-
     private resetShit(){
-        this.overall = 0
-        this.expect = 0
-        this.absolute = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        this.overall_us = 0
+        this.overall_them = 0
+        this.overall_exact = 0
+        this.absolute_us = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        this.absolute_them = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        this.result = [0, 0]
+        this.result_exact = [0, 0]
     }
 
-    private fullRun(n: number, c: Card[], relative: BoxArray<number>, expect: Box<number>){
-        this.layer(0, n - 1, c)
-        relative.splice(0, relative.length)
-        for (let a of this.absolute)
-            relative.push(a / this.overall)
-        this.resetShit()
+    private enemyLayer(c: Card[], e: number[]){
+        for (let i= 0; i < this.deck.length; i++){
+            if (e.includes(i)) continue
+            c.push(this.deck[i]!)
+            for (let j = i + 1; j < this.deck.length; j+=6) {
+                if (e.includes(j)) continue
 
-        this.detailed_layer(0, n - 1, c)
-        expect.value = this.expect / this.overall
-        this.resetShit()
+                c.push(this.deck[j]!)
+                this.testing_hand.update([...c])
+                this.absolute_them[this.testing_hand.rank.value - 1]++
+                let comp = this.hand.compare(this.testing_hand)
+                if (comp == Comp.Equal) this.result[1]++
+                if (comp == Comp.Greater) this.result[0]++
+                this.overall_them++
+                c.pop()
+
+            }
+            c.pop()
+        }
     }
-
-    run(mid: Card[], us: Card[]){
-        this.reduceDeck(us, mid)
-
-        this.fullRun(7 - us.length - mid.length, [...us, ...mid], this.relative_us, this.expect_us)
-        this.fullRun(7 - mid.length, [...mid], this.relative_them, this.expect_them)
-    }
-
-    private pLayer2(c: Card[], e: number[]){
+    private pLayer3(c: Card[], e: number[]){
         for (let i= 0; i < this.deck.length; i++){
             if (e.includes(i)) continue
             c.push(this.deck[i]!)
@@ -573,11 +550,10 @@ export class Probability{
 
                 c.push(this.deck[j]!)
                 this.testing_hand.update([...c])
-                // this.absolute[this.testing_hand.rank.value - 1]++
                 let comp = this.hand.compare(this.testing_hand)
-                if (comp == Comp.Equal) this.absolute[1]++
-                if (comp == Comp.Greater) this.absolute[0]++
-                this.overall++
+                if (comp == Comp.Equal) this.result_exact[1]++
+                if (comp == Comp.Greater) this.result_exact[0]++
+                this.overall_exact++
                 c.pop()
 
             }
@@ -585,27 +561,34 @@ export class Probability{
         }
     }
 
-    private pLayer1(i: number, n: number, c : Card[], us: Card[], e: number[]){
+    private midLayer(i: number, n: number, c : Card[], us: Card[], e: number[]){
         for (let j = i; j < this.deck.length; j++){
             e.push(j)
             c.push(this.deck[j]!)
-            if (n) this.pLayer1(j + 1, n - 1, c, us, e)
+            if (n) this.midLayer(j + 1, n - 1, c, us, e)
             else{
                 this.hand.update([...c, ...us])
-                this.pLayer2(c, e)
+                this.absolute_us[this.hand.rank.value - 1]++
+                this.overall_us++
+
+                this.enemyLayer(c, e)
+                // this.pLayer3(c, e)
             }
             c.pop()
             e.pop()
         }
     }
 
-    winP(mid: Card[], us: Card[]){
+    run(mid: Card[], us: Card[]){
         this.reduceDeck(us, mid)
-        this.pLayer1(0, 4 - mid.length, [...mid], us, [])
-        this.winning_prob.value = this.absolute[0]! / this.overall
-        this.tie_prob.value = this.absolute[1]! / this.overall
-        // for (let i = 0; i < this.absolute.length; i++) this.absolute[i] /= this.overall
-        console.log(this.absolute)
+        this.midLayer(0, 4 - mid.length, [...mid], us, [])
+        this.winning_prob.value = this.result[0]! / this.overall_them
+        this.tie_prob.value = this.result[1]! / this.overall_them
+        this.relative_us.splice(0, this.relative_us.length)
+        this.relative_them.splice(0, this.relative_them.length)
+        // this.relative_us.push(this.result_exact[0]! / this.overall_exact, this.result_exact[1]! / this.overall_exact)
+        for (let a of this.absolute_us) this.relative_us.push(a / this.overall_us)
+        for (let a of this.absolute_them) this.relative_them.push(a / this.overall_them)
         this.resetShit()
     }
 }
