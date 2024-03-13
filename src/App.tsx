@@ -55,7 +55,7 @@ export default function App() {
                 <button
                     class={"ml-auto text-xl"}
                     title={"Reset balance"}
-                    onclick={() => balance.value = 1000}
+                    onclick={() => {if (balance.value == 0) balance.value = 1000}}
                 >${insertBoxAsText(balance)}</button>
             </header>
             <CurrentGame currentGame={currentPair} balance={balance}/>

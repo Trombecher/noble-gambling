@@ -1,6 +1,7 @@
 // types
 
 import {Box, BoxArray} from "aena";
+import {Tab} from "./pokerui";
 
 export enum Rank{
     Zero,
@@ -249,12 +250,13 @@ export class Hand{
 }
 
 export class Player{
-    card: BoxArray<Card> = new BoxArray<Card>()
-    cash: Money = 0
+    card = new BoxArray<Card>
+    cash: Money = 1000
     bet: Money = 0
     hand: Hand = new Hand
     has_folded = false
     is_all_in = false
+    bot = new Bot(this)
 
     updateHand(mid: Card[]){
         let input = [...mid, ...this.card]
@@ -288,20 +290,10 @@ function shuffledDeck(): Deck{
     return deck
 }
 
-enum ActionType{
+export enum ActionType{
     Check,
     Raise,
-    Fold,
-    All_In
-}
-class Action{
-    kind: ActionType
-    amount: Money
-
-    constructor(k: ActionType, a: Money = 0){
-        this.kind = k
-        this.amount = a
-    }
+    Fold
 }
 
 export class PokerTable {
@@ -314,9 +306,14 @@ export class PokerTable {
     private current_player_id = 0
     private last_to_raise = 0
     deck = shuffledDeck()
+    prompt = new Box<Tab>(Tab.None)
 
     private current_player() {
         return this.player[this.current_player_id]!
+    }
+
+    refreshBalance(balance: Box<number>){
+        balance.value = this.player[0]!.cash
     }
 
     reset() {
@@ -345,13 +342,17 @@ export class PokerTable {
 
     private check() {
         let increase = this.to_match - this.current_player().bet
-        this.setBet(increase)
+        if (increase >= this.current_player().cash) this.allIn()
+        else this.setBet(increase)
     }
 
-    private raise(amount: Money) { // minimum allowed raise should be the amount of a big blind (2 * blind)
-        this.setBet(amount)
-        this.to_match = this.current_player().bet
-        this.last_to_raise = this.current_player_id
+    private raise(amount: Money, check_all_in: boolean = true) { // minimum allowed raise should be the amount of a big blind (2 * blind)
+        if (check_all_in && amount == this.current_player().cash) this.allIn()
+        else {
+            this.setBet(amount)
+            this.to_match = this.current_player().bet
+            this.last_to_raise = this.current_player_id
+        }
     }
 
     private fold() {
@@ -360,14 +361,14 @@ export class PokerTable {
 
     private allIn() {
         this.current_player().is_all_in = true
-        this.raise(this.current_player().cash)
+        this.raise(this.current_player().cash, false)
     }
 
-    private act(action: Action) {
-        if (action.kind == ActionType.Check) this.check()
-        else if (action.kind == ActionType.Raise) this.raise(action.amount)
-        else if (action.kind == ActionType.Fold) this.fold()
-        else if (action.kind == ActionType.All_In) this.allIn()
+    act(action: ActionType, amount: Money = 0) {
+        console.log(action, amount)
+        if (action == ActionType.Check) this.check()
+        else if (action == ActionType.Raise) this.raise(amount)
+        else if (action == ActionType.Fold) this.fold()
     }
 
     // gets next player
@@ -393,7 +394,11 @@ export class PokerTable {
     private betRound(): boolean {
         this.updateHands()
         do {
-            this.act(wait_for_action()) // let the player choose their action \\
+            if (this.current_player_id == 0) {
+                this.prompt.value = Tab.Action  // let the player choose their action \\
+                // wait for action
+            }
+            else this.act(...this.current_player().bot.prompt(this.mid, this.to_match))   // prompt bot
         } while (this.nextPlayer())
 
         let not_in = this.player.filter((player) => !player.has_folded && !player.is_all_in)
@@ -406,15 +411,29 @@ export class PokerTable {
             p.card.push(this.deck.pop() as Card)
             p.card.push(this.deck.pop() as Card)
         }
+        for (let i = 0; i < 5; i++)
+            this.mid.push(new Card(0, 4))
+
+        this.updateHands()
 
         // show players their cards \\
     }
 
     revealMid(stage: RevealType) {
         if (stage == RevealType.Flop) {
+            this.mid.splice(0, this.mid.length)
             for (let i = 0; i < 3; i++)
                 this.mid.push(this.deck.pop() as Card)
-        } else this.mid.push(this.deck.pop() as Card)
+        }
+        else{
+            if (stage == RevealType.River) this.mid.splice(3, 2)
+            else this.mid.pop()
+            this.mid.push(this.deck.pop() as Card)
+        }
+
+        let len = this.mid.length // glkemrelakjsddljkss
+        for (let i = 0; i < 5 - len; i++)
+            this.mid.push(new Card(0, 4))
 
         // show community cards to players \\
     }
@@ -460,7 +479,7 @@ export class PokerTable {
     // Runs one full game, decides on the winners and pays out
     start() {
         this.distribute()       // distributes cards to the players (pre-flop)
-        this.setBlinds()
+        // this.setBlinds()
         if (!this.betRound())   // runs the first round of betting
 
             // runs three betting rounds
@@ -482,10 +501,12 @@ export class PokerTable {
         for (let p of this.player)
             p.cash += amount
     }
-}
 
-function wait_for_action(): Action{
-    return new Action(ActionType.Raise, 200)
+    init(bots: number, balance: Box<number>, prompt: Box<Tab>) {
+        this.addPlayers(bots)
+        this.player[0]!.cash = balance.value
+        this.prompt = prompt
+    }
 }
 
 export class Probability{
@@ -497,11 +518,9 @@ export class Probability{
 
     private overall_us = 0
     private overall_them = 0
-    private overall_exact = 0
     private absolute_us = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     private absolute_them = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     private result = [0, 0]
-    private result_exact = [0, 0]
     private hand = new Hand
     private testing_hand = new Hand
 
@@ -514,11 +533,9 @@ export class Probability{
     private resetShit(){
         this.overall_us = 0
         this.overall_them = 0
-        this.overall_exact = 0
         this.absolute_us = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         this.absolute_them = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         this.result = [0, 0]
-        this.result_exact = [0, 0]
     }
 
     private enemyLayer(c: Card[], e: number[]){
@@ -535,25 +552,6 @@ export class Probability{
                 if (comp == Comp.Equal) this.result[1]++
                 if (comp == Comp.Greater) this.result[0]++
                 this.overall_them++
-                c.pop()
-
-            }
-            c.pop()
-        }
-    }
-    private pLayer3(c: Card[], e: number[]){
-        for (let i= 0; i < this.deck.length; i++){
-            if (e.includes(i)) continue
-            c.push(this.deck[i]!)
-            for (let j = i + 1; j < this.deck.length; j++) {
-                if (e.includes(j)) continue
-
-                c.push(this.deck[j]!)
-                this.testing_hand.update([...c])
-                let comp = this.hand.compare(this.testing_hand)
-                if (comp == Comp.Equal) this.result_exact[1]++
-                if (comp == Comp.Greater) this.result_exact[0]++
-                this.overall_exact++
                 c.pop()
 
             }
@@ -590,5 +588,26 @@ export class Probability{
         for (let a of this.absolute_us) this.relative_us.push(a / this.overall_us)
         for (let a of this.absolute_them) this.relative_them.push(a / this.overall_them)
         this.resetShit()
+    }
+}
+
+class Bot{
+    player
+
+    prompt(mid: Card[], match: Money): [ActionType, Money]{
+        let prob = new Probability
+        prob.run(mid.filter((card) => card.suit != 4), this.player.card)
+
+        if (prob.winning_prob.value < 0.35) return [ActionType.Fold, 0]
+
+        let check_cost = match - this.player.bet
+        if (!check_cost && prob.winning_prob.value < 0.55) return [ActionType.Check, 0]
+
+        let amount = (prob.winning_prob.value - 0.55)^4
+        return [ActionType.Raise, Math.round(amount * this.player.cash / 10) * 10]
+    }
+
+    constructor(player: Player) {
+        this.player = player
     }
 }

@@ -4,24 +4,28 @@ import {insertBoxAsText} from "aena/glue";
 export function MoneyBetter({
     locked,
     amount,
-    max
+    max,
+    class: className,
+    min = 0
 }: {
     locked: Box<boolean>,
     amount: Box<number>,
     max: Box<number>
+    class?: string
+    min?: number
 }) {
     return (
         <div>
             <div>Bet: ${insertBoxAsText(amount)}</div>
             <input
-                class={"block"}
+                class={`${className}`}
                 type={"range"}
-                min={0}
+                min={min}
                 max={max as Box<string | number>}
                 oninput={e => amount.value = +e.target.value}
                 step={1}
                 disabled={locked}
-                value={0}
+                value={amount as Box<string | number | string[]>}
             />
         </div>
     )
