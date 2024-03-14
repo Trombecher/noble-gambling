@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400pt" height="400pt">
+  <defs>
+    <linearGradient id="b">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5f0e00" stop-opacity=".41666666"/>
+    </linearGradient>
+    <linearGradient id="a">
+      <stop offset="0" stop-color="#fff" stop-opacity=".52499998"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient xlink:href="#a" id="c" x1=".15073529" x2="1.25" y1=".43220338" y2="-.22033899"/>
+    <linearGradient xlink:href="#b" id="d" x1="0" x2="1" y1=".5" y2=".5"/>
+  </defs>
+  <path fill="#ffe200" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width="10" d="M388.75 93.75C370 76.25 420 63.75 426.25 70c10 5-8.75 8.75-7.5 17.5s0 55 10 57.5 22.5 11.25 22.5 23.75C482.5 246.25 360 458.75 70 352.5c-5-3.75-32.5-35-37.5-42.5-2.5-8.75-6.25-30 8.75-37.5 128.75-33.75 277.5 32.5 345-118.75 11.25-26.25 2.5-60 2.5-60z"/>
+  <path fill="url(#c)" fill-rule="evenodd" d="m43.75 290 2.5-12.5c92.5-35 263.75 38.75 346.25-120C351.25 270 278.75 338.75 43.75 290z"/>
+  <path fill="#442400" fill-rule="evenodd" d="M386.15267 89.13626c2.91464-17.60038 29.11244-18.073307 36.44466-18.944656 11.98523 1.566316-15.48664 21.444656-36.44466 18.944656zM32.517518 305.14122c-.932686-18.36985-1.865381-24.42824 8.743911-30.48663 4.61679 6.92518 3.749991 28.36984-8.743911 30.48663z"/>
+  <path fill="url(#d)" fill-opacity=".75" fill-rule="evenodd" d="M133.75 366.25C352.5 421.25 426.74042 283.12802 440 250c22.5-40 8.75-85 8.75-85-1.25 135-142.5 243.75-315 201.25z"/>
+  <rdf:RDF xmlns="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+</svg>

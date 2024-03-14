@@ -1,7 +1,7 @@
-import { Box } from "aena";
-import { insertBox } from "aena/glue";
-import { Button, MoneyBetter } from "../components";
-import { Game } from "../games";
+import {Box} from "aena";
+import {insertBox} from "aena/glue";
+import {Button, MoneyBetter} from "../components";
+import {Game} from "../games";
 
 enum SlotState {
     Cherry,
@@ -24,33 +24,50 @@ export const Slots: Game = ({balance}) => {
 
     const locked = new Box(false);
     const moneyBet = new Box(0);
+    balance.addListener(balance => moneyBet.value > balance && (moneyBet.value = balance))
 
     return (
         <>
-            <div>{slots.map(slot => (
+            <div class={"self-center flex gap-2"}>{slots.map(slot => (
                 <Slot slot={slot}/>
             ))}</div>
             <MoneyBetter
                 locked={locked}
                 amount={moneyBet}
                 max={balance}
+                class={"self-center"}
             />
-            <Button onclick={() => {
-                slots.forEach(slot => slot.value = randomSlotState());
-                if(slots[0] === slots[1] && slots[0] === slots[2]) {
-                    balance.value += moneyBet.value * 10;
-                } else {
-                    balance.value -= moneyBet.value;
-                }
-            }}>Spin</Button>
+            <Button
+                onclick={() => {
+                    slots.forEach(slot => slot.value = randomSlotState());
+                    if(slots[0] === slots[1] && slots[0] === slots[2]) {
+                        balance.value += moneyBet.value * 10;
+                    } else {
+                        balance.value -= moneyBet.value;
+                    }
+                }}
+                class={"self-center"}
+            >Spin</Button>
         </>
-    )
-}
+    );
+};
 
-function Slot({slot}: {slot: Box<number>}) {
+const FILE_NAMES: {[I in SlotState]: string} = {
+    [SlotState.Apple]: "apple.png",
+    [SlotState.Star]: "star.svg",
+    [SlotState.Diamond]: "diamond.svg",
+    [SlotState.Cherry]: "cherries.svg",
+    [SlotState.Banana]: "banana.svg",
+};
+
+function Slot({slot}: {slot: Box<SlotState>}) {
     return (
-        <div>{insertBox(slot, state => (
-            <div>{state}</div>
-        ))}</div>
-    )
+        <div class={"w-24 flex justify-center items-center h-32"}>
+            <img
+                src={slot.derive(slot =>
+                    `/noble-gambling/slots/${FILE_NAMES[slot]}`)}
+                alt={""}
+            />
+        </div>
+    );
 }

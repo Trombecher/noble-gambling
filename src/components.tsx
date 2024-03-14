@@ -15,10 +15,9 @@ export function MoneyBetter({
     min?: number
 }) {
     return (
-        <div>
+        <div class={`${className}`}>
             <div>Bet: ${insertBoxAsString(amount)}</div>
             <input
-                class={`${className}`}
                 type={"range"}
                 min={min}
                 max={max as Box<string | number>}
