@@ -1,5 +1,5 @@
 import {Box} from "aena";
-import {insertBoxAsText, insertBoxToString} from "aena/glue";
+import {insertBoxAsString, insertBoxToString} from "aena/glue";
 import {CurrentGame, GAME_MAP, GameSelect} from "./games";
 
 /**
@@ -55,8 +55,8 @@ export default function App() {
                 <button
                     class={"ml-auto text-xl"}
                     title={"Reset balance"}
-                    onclick={() => {if (balance.value == 0) balance.value = 1000}}
-                >${insertBoxAsText(balance)}</button>
+                    onclick={() => balance.value = 1000}
+                >${insertBoxAsString(balance)}</button>
             </header>
             <CurrentGame currentGame={currentPair} balance={balance}/>
             <GameSelect currentGame={currentPair}/>

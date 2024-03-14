@@ -1,6 +1,6 @@
 import {Game} from "../games";
 import {ActionType, Card, PokerTable, Probability} from "./pokerframe";
-import {insertBoxArray, insertBoxAsText, insertBoxToString} from "aena/glue";
+import {insertBoxArray, insertBoxAsString, insertBoxToString} from "aena/glue";
 import {Box, JSX} from "aena";
 import {Button, MoneyBetter} from "../components";
 
@@ -41,7 +41,7 @@ export const Poker: Game = ({balance}) => {
                         <Button class={"bg-opacity-0 hover:bg-white/20"} onclick={() => {
                             if (bots.value > 1) bots.value--
                         }}>-</Button>
-                        {insertBoxAsText(bots)}
+                        {insertBoxAsString(bots)}
                         <Button class={"bg-opacity-0 hover:bg-white/20"} onclick={() => bots.value++}>+</Button>
                     </div>
                 </div>
@@ -77,7 +77,7 @@ export const Poker: Game = ({balance}) => {
                         </div>
                         <div class={"rounded-xl bg-white/20 m-auto ml-5 mt-6"}>
                             <Button class={"bg-opacity-0 hover:bg-white/20"} onclick={() => modify("subtract", 25)}>-</Button>
-                            {insertBoxAsText(currentBet)}$
+                            {insertBoxAsString(currentBet)}$
                             <Button class={"bg-opacity-0 hover:bg-white/20"} onclick={() => modify("add", 25)}>+</Button>
                             <div>
                                 <Button class={"bg-lime/20 hover:bg-white/20 w-full"} onclick={() => {game.act(ActionType.Raise, currentBet.value); input.value = Tab.None}}>Confirm</Button>

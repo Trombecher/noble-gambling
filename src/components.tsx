@@ -1,5 +1,5 @@
 import {Box, JSX} from "aena";
-import {insertBoxAsText} from "aena/glue";
+import {insertBoxAsString} from "aena/glue";
 
 export function MoneyBetter({
     locked,
@@ -16,7 +16,7 @@ export function MoneyBetter({
 }) {
     return (
         <div>
-            <div>Bet: ${insertBoxAsText(amount)}</div>
+            <div>Bet: ${insertBoxAsString(amount)}</div>
             <input
                 class={`${className}`}
                 type={"range"}

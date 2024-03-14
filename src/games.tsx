@@ -2,13 +2,13 @@ import {Box, JSX} from "aena";
 import {Roulette} from "./games/roulette";
 import {Poker} from "./games/pokerui";
 import {insertBox} from "aena/glue";
-import Slots from "./games/slotsui";
+import {Slots} from "./games/slots";
 
-export const GAME_MAP: readonly (readonly [string, Game])[] = [
+export const GAME_MAP = [
     ["Roulette", Roulette],
     ["Slots", Slots],
     ["Poker", Poker]
-];
+] as const;
 
 export type Game = (props: {
     balance: Box<number>,
