@@ -1,7 +1,7 @@
 // types
 
 import {Box, BoxArray} from "aena";
-import {Tab} from "./pokerui";
+import {promptAction} from "./pokerui";
 
 export enum Rank{
     Zero,
@@ -254,7 +254,7 @@ export class Player{
     cash: Money = 1000
     bet: Money = 0
     hand: Hand = new Hand
-    has_folded = false
+    has_folded = new Box(false)
     is_all_in = false
     bot = new Bot(this)
 
@@ -303,17 +303,16 @@ export class PokerTable {
     to_match: Money = 0
     blind: Money = 25
     dealer_id = 0
-    private current_player_id = 0
+    current_player_id = new Box(0)
     private last_to_raise = 0
     deck = shuffledDeck()
-    prompt = new Box<Tab>(Tab.None)
+    action = new Box([3, 0])
+    info = new BoxArray<number[]>
+    balance = new Box(0)
+    result = new Box(false)
 
     private current_player() {
-        return this.player[this.current_player_id]!
-    }
-
-    refreshBalance(balance: Box<number>){
-        balance.value = this.player[0]!.cash
+        return this.player[this.current_player_id.value]!
     }
 
     reset() {
@@ -323,11 +322,11 @@ export class PokerTable {
         this.mid.splice(0, this.mid.length)
         this.deck = shuffledDeck()
         this.dealer_id = (this.dealer_id + 1) % this.player.length
-        this.current_player_id = this.dealer_id
+        this.current_player_id.value = this.dealer_id
         for (let p of this.player) {
             p.card.splice(0, p.card.length)
             p.bet = 0
-            p.has_folded = false
+            p.has_folded.value = false
             p.is_all_in = false
             p.hand.update([])
         }
@@ -336,6 +335,7 @@ export class PokerTable {
     private setBet(amount: Money) {
         this.current_player().bet += amount
         this.current_player().cash -= amount
+        if (!this.current_player_id.value) this.balance.value -= amount
         this.pot += amount
         // update pot and show players their new net worth and bet \\
     }
@@ -351,12 +351,12 @@ export class PokerTable {
         else {
             this.setBet(amount)
             this.to_match = this.current_player().bet
-            this.last_to_raise = this.current_player_id
+            this.last_to_raise = this.current_player_id.value
         }
     }
 
     private fold() {
-        this.current_player().has_folded = true
+        this.current_player().has_folded.value = true
     }
 
     private allIn() {
@@ -365,7 +365,6 @@ export class PokerTable {
     }
 
     act(action: ActionType, amount: Money = 0) {
-        console.log(action, amount)
         if (action == ActionType.Check) this.check()
         else if (action == ActionType.Raise) this.raise(amount)
         else if (action == ActionType.Fold) this.fold()
@@ -376,9 +375,9 @@ export class PokerTable {
     // returns false if the betting round is over
     private nextPlayer(): boolean {
         do {
-            this.current_player_id = (this.current_player_id + 1) % this.player.length
-            if (this.current_player_id == this.last_to_raise) return false
-        } while (this.current_player().has_folded || this.current_player().is_all_in)
+            this.current_player_id.value = (this.current_player_id.value + 1) % this.player.length
+            if (this.current_player_id.value == this.last_to_raise) return false
+        } while (this.current_player().has_folded.value || this.current_player().is_all_in)
 
         return true
     }
@@ -391,19 +390,30 @@ export class PokerTable {
     }
 
     // returns true if all players except one have folded or are all in
-    private betRound(): boolean {
+    private async betRound(): Promise<boolean> {
         this.updateHands()
         do {
-            if (this.current_player_id == 0) {
-                this.prompt.value = Tab.Action  // let the player choose their action \\
-                // wait for action
+            if (this.current_player_id.value == 0) {
+                await promptAction()
+                this.act(this.action.value[0]!, this.action.value[1]!)
             }
-            else this.act(...this.current_player().bot.prompt(this.mid, this.to_match))   // prompt bot
+            else {
+                this.action.value = this.current_player().bot.prompt(this.mid, this.to_match)
+                this.act(this.action.value[0]!, this.action.value[1]!)
+                this.info.splice(this.current_player_id.value - 1, 1, [this.current_player().cash, this.current_player_id.value])
+                await new Promise(resolve => setTimeout(resolve, 1000))
+            }   // prompt bot
         } while (this.nextPlayer())
 
-        let not_in = this.player.filter((player) => !player.has_folded && !player.is_all_in)
+        let not_in = this.player.filter((player) => !player.has_folded.value && !player.is_all_in)
         return not_in.length <= 1;
 
+    }
+
+    fullReset(){
+        this.player.splice(1, this.player.length - 1)
+        this.info.splice(0, this.info.length)
+        this.reset()
     }
 
     distribute() {
@@ -424,16 +434,12 @@ export class PokerTable {
             this.mid.splice(0, this.mid.length)
             for (let i = 0; i < 3; i++)
                 this.mid.push(this.deck.pop() as Card)
+            this.mid.push(new Card(0, 4), new Card(0, 4))
         }
         else{
-            if (stage == RevealType.River) this.mid.splice(3, 2)
-            else this.mid.pop()
-            this.mid.push(this.deck.pop() as Card)
+            if (stage == RevealType.Turn) this.mid.splice(3, 1, this.deck.pop() as Card)
+            else this.mid.splice(4, 1, this.deck.pop() as Card)
         }
-
-        let len = this.mid.length // glkemrelakjsddljkss
-        for (let i = 0; i < 5 - len; i++)
-            this.mid.push(new Card(0, 4))
 
         // show community cards to players \\
     }
@@ -453,7 +459,7 @@ export class PokerTable {
             this.updateHands()
         }
 
-        let not_folded = this.player.filter((player) => !player.has_folded)
+        let not_folded = this.player.filter((player) => !player.has_folded.value)
         let winners = [not_folded[0]]
         not_folded.splice(0, 1)
         for (let player of not_folded) {
@@ -469,7 +475,7 @@ export class PokerTable {
     }
 
     private setBlinds() {
-        this.current_player_id -= 2
+        this.current_player_id.value -= 2
         this.raise(this.blind)
         this.nextPlayer()
         this.raise(2 * this.blind)
@@ -477,24 +483,27 @@ export class PokerTable {
     }
 
     // Runs one full game, decides on the winners and pays out
-    start() {
+    async start() {
+        this.reset()
         this.distribute()       // distributes cards to the players (pre-flop)
         // this.setBlinds()
-        if (!this.betRound())   // runs the first round of betting
-
+        if (!await this.betRound().then((v) => {return v})) {  // runs the first round of betting
             // runs three betting rounds
             for (let stage = RevealType.Flop; stage <= RevealType.River; stage++) {
                 this.revealMid(stage)   // in stages - reveals the community cards (flop, turn, river)
-                if (this.betRound()) break
+                if (await this.betRound().then((v) => {return v})) break
             }
+        }
 
         this.wrapUp()
-        this.reset()
+        this.result.value = true
     }
 
     addPlayers(n: number) {
-        for (let i = 0; i < n; i++)
+        for (let i = 0; i < n; i++) {
             this.player.push(new Player)
+            this.info.push([1000, this.info.length])
+        }
     }
 
     giveAll(amount: Money) {
@@ -502,10 +511,11 @@ export class PokerTable {
             p.cash += amount
     }
 
-    init(bots: number, balance: Box<number>, prompt: Box<Tab>) {
+    init(bots: number, balance: Box<number>) {
+        this.info.pop()
         this.addPlayers(bots)
-        this.player[0]!.cash = balance.value
-        this.prompt = prompt
+        this.balance = balance
+        this.player[0]!.cash = this.balance.value
     }
 }
 
@@ -584,7 +594,6 @@ export class Probability{
         this.tie_prob.value = this.result[1]! / this.overall_them
         this.relative_us.splice(0, this.relative_us.length)
         this.relative_them.splice(0, this.relative_them.length)
-        // this.relative_us.push(this.result_exact[0]! / this.overall_exact, this.result_exact[1]! / this.overall_exact)
         for (let a of this.absolute_us) this.relative_us.push(a / this.overall_us)
         for (let a of this.absolute_them) this.relative_them.push(a / this.overall_them)
         this.resetShit()
@@ -595,16 +604,26 @@ class Bot{
     player
 
     prompt(mid: Card[], match: Money): [ActionType, Money]{
+        let _mid = mid.filter((card) => card.suit != 4)
+        if (!_mid.length){
+            if (match < 100 || match < this.player.cash * 0.05) return [ActionType.Check, 0]
+            return [ActionType.Fold, 0]
+        }
+
         let prob = new Probability
-        prob.run(mid.filter((card) => card.suit != 4), this.player.card)
+        prob.run(_mid, this.player.card)
 
         if (prob.winning_prob.value < 0.35) return [ActionType.Fold, 0]
 
         let check_cost = match - this.player.bet
-        if (!check_cost && prob.winning_prob.value < 0.55) return [ActionType.Check, 0]
+        if (!check_cost) return [ActionType.Check, 0]
 
-        let amount = (prob.winning_prob.value - 0.55)^4
-        return [ActionType.Raise, Math.round(amount * this.player.cash / 10) * 10]
+        let frac = Math.pow((prob.winning_prob.value - 0.55) / 0.45, 2)
+        let amount = Math.round(frac * this.player.cash / 10) * 10
+
+        if (check_cost > amount) return [ActionType.Fold, 0]
+        if (amount == check_cost) return [ActionType.Check, 0]
+        return [ActionType.Raise, amount] // possible up round error
     }
 
     constructor(player: Player) {

@@ -17,9 +17,10 @@ export enum Tab{
     Raise
 }
 
+let input = new Box(Tab.None)
+let finished = false
 export const Poker: Game = ({balance}) => {
     let tab = new Box(Tab.Setup)
-    let input = new Box(Tab.None)
     let bots = new Box(1)
     let game = new PokerTable
     game.addPlayers(1)
@@ -47,44 +48,50 @@ export const Poker: Game = ({balance}) => {
                 </div>
 
                 <Button class={"mt-5 bg-lime/30 hover:bg-white/20"}
-                        onclick={() => {game.init(bots.value, balance, input); tab.value = Tab.Game; game.start()}}>Start</Button>
+                        onclick={() => {game.init(bots.value, balance); tab.value = Tab.Game; game.start()}}>Start</Button>
 
             </div>
-            <div class={tab.derive<string>((tab) => (tab === Tab.Setup ? "hidden" : ""))}>
-                <Button class={"mr-auto ml-5 bg-opacity-0"} onclick={() => tab.value = Tab.Setup}>Back</Button>
+            <div class={tab.derive<string>((tab) => tab === Tab.Setup ? "hidden" : "")}>
+                <Button class={"mr-auto ml-5 bg-opacity-0"} onclick={() => {game.fullReset(); tab.value = Tab.Setup}}>Back</Button>
+                <div class={"flex gap-5 justify-center mb-10"}>
+                    {insertBoxArray(game.info, (cash) => formatInformation(cash, game))}
+                </div>
                 {CommunityCards(game)}
                 {PlayerCards(game)}
 
-                <div class={input.derive<string>((input) => (input === Tab.Action ? "" : "hidden") + " m-auto flex gap-6")}>
-                    <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => {game.act(ActionType.Check); input.value = Tab.None}}>Check</Button>
-                    <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => {game.act(ActionType.Fold); input.value = Tab.None}}>Fold</Button>
+                <div class={input.derive<string>((input) => (input === Tab.Action ? "" : "hidden") + " flex gap-6 m-auto justify-center")}>
+                    <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => {input.value = Tab.None; game.action.value = [ActionType.Check, 0]; finished = true}}>Check</Button>
+                    <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => {input.value = Tab.None; game.action.value = [ActionType.Fold, 0]; finished = true}}>Fold</Button>
                     <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => input.value = Tab.Raise}>Raise</Button>
                 </div>
                 <div class={input.derive<string>((input) => input === Tab.Raise ? "" : " hidden")}>
-                    <div class={"flex p-4 m-auto"}>
-                        <div>
+                    <div class={"flex p-4 justify-center"}>
+                        <div class={"ml-auto"}>
                             <MoneyBetter locked={locked} amount={currentBet} max={balance} min={25}
                                          class={"m-auto w-full flex h-4 mb-6 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"}></MoneyBetter>
 
                             <div class={"flex justify-around"}>
                                 <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => input.value = Tab.Action}>Back</Button>
                                 <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = 25}>min</Button>
-                                <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = 1 / 4 * balance.value}>1/4</Button>
-                                <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = 1 / 2 * balance.value}>1/2</Button>
-                                <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = 3 / 4 * balance.value}>3/4</Button>
+                                <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = Math.round(1 / 4 * balance.value)}>1/4</Button>
+                                <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = Math.round(1 / 2 * balance.value)}>1/2</Button>
+                                <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = Math.round(3 / 4 * balance.value)}>3/4</Button>
                                 <Button class={"border transition hover:bg-white/20 border-white/30"} onclick={() => currentBet.value = 1 * balance.value}>All in</Button>
                             </div>
                         </div>
-                        <div class={"rounded-xl bg-white/20 m-auto ml-5 mt-6"}>
+                        <div class={"rounded-xl bg-white/20 ml-5 mt-6 mb-auto mr-auto"}>
                             <Button class={"bg-opacity-0 hover:bg-white/20"} onclick={() => modify("subtract", 25)}>-</Button>
                             {insertBoxAsString(currentBet)}$
                             <Button class={"bg-opacity-0 hover:bg-white/20"} onclick={() => modify("add", 25)}>+</Button>
                             <div>
-                                <Button class={"bg-lime/20 hover:bg-white/20 w-full"} onclick={() => {game.act(ActionType.Raise, currentBet.value); input.value = Tab.None}}>Confirm</Button>
+                                <Button class={"bg-lime/20 hover:bg-white/20 w-full"} onclick={() => {input.value = Tab.None; game.action.value = [ActionType.Raise, currentBet.value]; currentBet.value = 25; finished = true}}>Confirm</Button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class={game.result.derive<string>((r) => (r ? "" : "hidden") + " m-auto")}>
+                <Button class={"border transition hover:bg-white/20 border-white/30 p-2"} onclick={() => game.result.value = false}>Next Round</Button>
             </div>
         </>
     );
@@ -95,6 +102,53 @@ function formatProbability(p: number) {
     let round = Math.round(100 * p)
     if (!round && p) return "<0.5"
     return round.toString()
+}
+
+function formatInformation(cash: number[], game: PokerTable){
+    return(
+        <div>
+            <div
+                class={game.player[cash[1]!]!.has_folded.derive<string>((f) => (f ? "bg-[#a3a3a3]/50" : "bg-red/50") + " rounded-md text-center p-2")}>
+                <p>{cash[0]!}$</p>
+            </div>
+            <div class={game.result.derive<string>((r) => r ? "" : "hidden")}>
+                <div class={"flex gap-2"}>
+                    {insertBoxArray(game.player[cash[1]!]!.card, card =>
+                        <img
+                            src={`/noble-gambling/Cards/${RANK_MAP[card.rank]}_of_${SUIT_MAP[card.suit]}.png`}
+                            alt=""
+                            width={75}
+                            height={52}
+                        />
+                    )}
+                </div>
+                <div class={"text-center"}>
+                    <p>{insertBoxToString(game.player[cash[1]!]!.hand.rank, rank => HAND_MAP[rank]!)}</p>
+                </div>
+            </div>
+            <div class={game.result.derive<string>((r) => (!r ? "" : "hidden") + " flex gap-2")}>
+                {UICard(new Card(0, 4), game)}
+                {UICard(new Card(0, 4), game)}
+            </div>
+            <div
+                class={game.current_player_id.derive<string>((cur) => ((cur == cash[1]! ? "" : "hidden") + " rounded-md text-center"))}>
+                <p class={`${game.action.value[0]! == ActionType.Raise ? "" : "hidden"}`}>Raise: {game.action.value[1]!}$</p>
+                <p class={`${game.action.value[0]! == ActionType.Check ? "" : "hidden"}`}>Check</p>
+                <p class={`${game.action.value[0]! == ActionType.Fold ? "" : "hidden"}`}>Fold</p>
+            </div>
+        </div>
+    )
+}
+
+export async function promptAction() {
+    input.value = Tab.Action
+    while (true) {
+        await new Promise(resolve => setTimeout(resolve, 100)) // ugh
+        if (finished) {
+            finished = false
+            return
+        }
+    }
 }
 
 function stats(prob: Probability): JSX.Element {
