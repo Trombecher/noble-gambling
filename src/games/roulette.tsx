@@ -32,7 +32,7 @@ export const Roulette: Game = ({balance}) => {
                 <h2 class={"text-8xl"}>{won ? "Won" : "Lost"}</h2>
             ))}
             <h2 class={"text-2xl mb-6 self-center mt-8"}>Bet on a number or below:</h2>
-            <div class={"w-40 h-40 grid grid-cols-2 gap-2 mb-4 z-50 self-center"}>
+            <div class={"w-40 h-40 grid grid-cols-2 gap-2 mb-4 self-center"}>
                 {([
                     "Red",
                     "Black",
@@ -83,7 +83,7 @@ export const Roulette: Game = ({balance}) => {
                         }
 
                         // Display win/lose message for 3s
-                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        await new Promise(resolve => setTimeout(resolve, 2000));
 
                         // Unlock UI inputs
                         locked.value = false;
@@ -152,7 +152,7 @@ function Wheel(
                                     value === 0 ? "fill-lime" : isRed(index) ? "fill-red" : "fill-black"
                                 } ${
                                     bet === value ? "brightness-[5]" : "hover:brightness-[2]"
-                                } z-50`)}
+                                }`)}
                             />
                             <text
                                 x={31}

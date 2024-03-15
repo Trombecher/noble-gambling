@@ -15,8 +15,8 @@ export function MoneyBetter({
     min?: number
 }) {
     return (
-        <div class={`${className}`}>
-            <div>Bet: ${insertBoxAsString(amount)}</div>
+        <div class={`${className || ""} w-64`}>
+            <div class={"text-center text-xl"}>Bet: ${insertBoxAsString(amount)}</div>
             <input
                 type={"range"}
                 min={min}
@@ -24,8 +24,22 @@ export function MoneyBetter({
                 oninput={e => amount.value = +e.target.value}
                 step={1}
                 disabled={locked}
+                class={"w-full"}
                 value={amount as Box<string | number | string[]>}
             />
+            <div class={"flex gap-2"}>{([
+                ["0", 0],
+                ["1/4", 0.25],
+                ["1/2", 0.5],
+                ["3/4", 0.75],
+                ["All in", 1],
+            ] as const).map(([text, m]) => (
+                <button
+                    class={"w-full bg-white/30 hover:bg-white/50 disabled:bg-white/0 py-1 rounded-lg"}
+                    onclick={() => amount.value = max.value * m}
+                    disabled={locked}
+                >{text}</button>
+            ))}</div>
         </div>
     )
 }
@@ -36,6 +50,6 @@ export function Button({
     ...props
 }: JSX.IntrinsicElements["button"]) {
     return (
-        <button class={`${className} transition px-4 bg-black py-1 rounded-xl text-lg hover:bg-black/60 active:bg-white/20`} {...props}>{children}</button>
+        <button class={`${className} transition px-4 bg-white/30 py-1 rounded-xl text-lg hover:bg-white/50 active:bg-white/80`} {...props}>{children}</button>
     )
 }

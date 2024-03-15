@@ -1,5 +1,4 @@
 import {Box} from "aena";
-import {insertBox} from "aena/glue";
 import {Button, MoneyBetter} from "../components";
 import {Game} from "../games";
 
@@ -40,13 +39,13 @@ export const Slots: Game = ({balance}) => {
             <Button
                 onclick={() => {
                     slots.forEach(slot => slot.value = randomSlotState());
-                    if(slots[0] === slots[1] && slots[0] === slots[2]) {
-                        balance.value += moneyBet.value * 10;
+                    if(slots[0].value === slots[1].value && slots[0].value === slots[2].value) {
+                        balance.value += moneyBet.value * 100;
                     } else {
                         balance.value -= moneyBet.value;
                     }
                 }}
-                class={"self-center"}
+                class={"self-center mt-4"}
             >Spin</Button>
         </>
     );
