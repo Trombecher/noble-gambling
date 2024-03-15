@@ -40,7 +40,7 @@ export const Slots: Game = ({balance}) => {
                 onclick={() => {
                     slots.forEach(slot => slot.value = randomSlotState());
                     if(slots[0].value === slots[1].value && slots[0].value === slots[2].value) {
-                        balance.value += moneyBet.value * 100;
+                        balance.value += moneyBet.value * 40;
                     } else {
                         balance.value -= moneyBet.value;
                     }
