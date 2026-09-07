@@ -45,11 +45,7 @@
         // JavaScript Support
         "allowJs": false,
         // Language and Environment
-        "lib": [
-            "ESNext",
-            "DOM",
-            "DOM.Iterable"
-        ],
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "target": "ESNext",
         // ...
 
@@ -59,12 +55,9 @@
         "pretty": true,
 
         // JSX
-        "jsx": "preserve",
+        "jsx": "react",
         "jsxFactory": "createElement",
-        "jsxFragmentFactory": "Fragment",
-        "jsxImportSource": "aena"
+        "jsxFragmentFactory": "Fragment"
     },
-    "include": [
-        "src"
-    ]
+    "include": ["src"]
 }

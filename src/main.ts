@@ -1,5 +1,5 @@
-import "./main.css";
-import App from "./App";
+import "./global.css";
 import {mount} from "aena";
+import App from "./App";
 
 mount(document.body, App());

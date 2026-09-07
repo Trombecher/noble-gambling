@@ -7,7 +7,7 @@ import {CurrentGame, GAME_MAP, GameSelect} from "./games";
  */
 function createState() {
     const balance = new Box(localStorage["balance"] || 1000);
-    balance.addListener(balance => localStorage["balance"] = balance);
+    balance.addListener(balance => (localStorage["balance"] = balance));
 
     function getPair(name: string | null | undefined) {
         return GAME_MAP.find(([n]) => n === name);
@@ -19,12 +19,12 @@ function createState() {
     let poppedState = false;
 
     currentPair.addListener(pair => {
-        if(poppedState) {
+        if (poppedState) {
             poppedState = false;
             return;
         }
 
-        if(pair) url.searchParams.set("game", pair[0]);
+        if (pair) url.searchParams.set("game", pair[0]);
         else url.searchParams.delete("game");
 
         history.pushState(null, "", url);
@@ -45,22 +45,35 @@ export default function App() {
     return (
         <>
             <header
-                class={"z-50 sticky top-0 gap-4 flex p-4 w-full select-none bg-gradient-to-t from-green/30 to-green backdrop-blur-2xl backdrop:saturate-200"}>
+                class={
+                    "z-50 sticky top-0 gap-4 flex p-4 w-full select-none bg-linear-to-t from-green/30 to-green backdrop-blur-2xl backdrop:saturate-200"
+                }
+            >
                 <button
-                    onclick={() => currentPair.value = undefined}
+                    onclick={() => (currentPair.value = undefined)}
                     class={"text-3xl"}
-                >Noble Gambling
+                    type={"button"}
+                >
+                    Noble Gambling
                 </button>
-                <h2 class={"text-3xl text-white/50"}>{insertBoxToString(currentPair, pair => pair ? pair[0] : "")}</h2>
+                <h2 class={"text-3xl text-white/50"}>
+                    {insertBoxToString(currentPair, pair =>
+                        pair ? pair[0] : "",
+                    )}
+                </h2>
                 <button
                     class={"ml-auto text-xl"}
                     title={"Reset balance"}
-                    onclick={() => balance.value = 1000}
-                >${insertBoxAsString(balance)}</button>
+                    onclick={() => (balance.value = 1000)}
+                    type={"button"}
+                >
+                    ${insertBoxAsString(balance)}
+                </button>
             </header>
-            <CurrentGame currentGame={currentPair} balance={balance}/>
-            <GameSelect currentGame={currentPair}/>
-            <footer class={"py-6 mx-auto mt-auto"}>Copyright &copy; {new Date().getFullYear()} Robin, Niklas und
+            <CurrentGame currentGame={currentPair} balance={balance} />
+            <GameSelect currentGame={currentPair} />
+            <footer class={"py-6 mx-auto mt-auto"}>
+                Copyright &copy; {new Date().getFullYear()} Robin, Niklas und
                 Tobias
             </footer>
         </>
